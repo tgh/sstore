@@ -6,8 +6,10 @@
 
 #include <linux/init.h>
 #include <linux/module.h>
+#include <linux/moduleparam.h>
 
 MODULE_LICENSE("Dual BSD/GPL");
+MODULE_AUTHOR("Tyler Hayes");
 
 static int sstore_init(void)
 {
@@ -22,3 +24,11 @@ static void sstore_exit(void)
 
 module_init(sstore_init);
 module_exit(sstore_exit);
+
+/*
+ * Parameters
+ */
+static unsigned long max_blobs = 1;
+static unsigned long max_size = 1024;
+module_param(max_blobs, ulong, S_IRUGO);
+module_param(max_size, ulong, S_IRUGO);
