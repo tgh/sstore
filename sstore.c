@@ -7,20 +7,139 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
+#include <linux/fs.h>           //for register_chrdev...
+#include <linux/types.h>        //for dev_t type
+#include <linux/kdev_t.h>       //for MKDEV, MAJOR, and MINOR macros
+
 
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("Tyler Hayes");
 
+int sstore_major = 0;
+int sstore_device_count = 2;
+/*
+struct file_operations sstore_fops = {
+	.owner = THIS_MODULE,
+	.llseek = sstore_llseek,
+	.read = sstore_read,
+	.write = sstore_write,
+	.ioctl = sstore_ioctl,
+	.open = sstore_open,
+	.release = sstore_release
+};
+*/
+//---------------------------------------------------------------------------
+
+/*
+ * INIT
+ */
 static int sstore_init(void)
 {
-	printk(KERN_ALERT "Hello, world\n");
+    int result;
+    dev_t device = MKDEV(sstore_major, 0);
+
+    printk(KERN_ALERT "In _init\n");
+
+    if (sstore_major) {
+	    result = register_chrdev_region(device, sstore_device_count, 
+								"sstore");
+    } else {
+        result = alloc_chrdev_region(&device, sstore_major,
+						sstore_device_count, "sstore");
+    } 
+    if (result < 0) {
+		printk(KERN_ALERT "Major number %d not found: sstore", 
+								sstore_major);
+		return result;
+	}
+
 	return 0;
 }
 
+//---------------------------------------------------------------------------
+
+/*
+ * OPEN
+ */
+int sstore_open(struct inode * i_node, struct file * file)
+{
+	return 0;
+}
+
+//---------------------------------------------------------------------------
+
+/*
+ * LLSEEK
+ */
+loff_t sstore_llseek(struct file * file, loff_t offset, int i)
+{
+	return offset;
+}
+
+//---------------------------------------------------------------------------
+
+/*
+ * READ
+ */
+ssize_t sstore_read(struct file * file, char __user * user, size_t size,
+							loff_t * offset)
+{
+	return size;
+}
+
+//---------------------------------------------------------------------------
+
+/*
+ * WRITE
+ */
+ssize_t sstore_write(struct file * file, const char __user * user,
+					size_t size, loff_t * offset)
+{
+	return size;
+}
+
+//---------------------------------------------------------------------------
+
+/*
+ * IOCTL
+ */
+int sstore_ioctl(struct inode * i_node, struct file * file, unsigned int ui,
+							unsigned long ul)
+{
+	return 0;
+}
+
+//---------------------------------------------------------------------------
+
+/*
+ * RELEASE
+ */
+int sstore_release(struct inode * i_node, struct file * file)
+{
+	return 0;
+}
+
+//---------------------------------------------------------------------------
+
+/*
+ * EXIT
+ */
 static void sstore_exit(void)
 {
-	printk(KERN_ALERT "Goodbye, cruel world\n");
+	printk(KERN_ALERT "In _exit\n");
 }
+
+//---------------------------------------------------------------------------
+
+struct file_operations sstore_fops = {
+        .owner = THIS_MODULE,
+        .llseek = sstore_llseek,
+        .read = sstore_read,
+        .write = sstore_write,
+        .ioctl = sstore_ioctl,
+        .open = sstore_open,
+        .release = sstore_release
+};
 
 module_init(sstore_init);
 module_exit(sstore_exit);
