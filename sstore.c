@@ -29,17 +29,17 @@ int sstore_device_count = 2;
 static int sstore_init(void)
 {
     int result = 0;
-    dev_t device = MKDEV(sstore_major, 0);
+    dev_t device_num = MKDEV(sstore_major, 0);
 
     printk(KERN_ALERT "In _init\n");
 
     if (sstore_major) {
-	    result = register_chrdev_region(device, sstore_device_count, 
-								"sstore");
+	    result = register_chrdev_region(device_num, sstore_device_count, 
+								                                "sstore");
     } else {
-        result = alloc_chrdev_region(&device, sstore_major,
+        result = alloc_chrdev_region(&device_num, sstore_major,
 						sstore_device_count, "sstore");
-        sstore_major = MAJOR(device);
+        sstore_major = MAJOR(device_num);
     } 
     if (result < 0) {
 		printk(KERN_ALERT "Major number %d not found: sstore", 
@@ -120,15 +120,19 @@ int sstore_release(struct inode * i_node, struct file * file)
  */
 static void sstore_exit(void)
 {
-    dev_t device = MKDEV(sstore_major, 0);
+    dev_t device_num = MKDEV(sstore_major, 0);
 
 	printk(KERN_ALERT "In _exit\n");
 
-    unregister_chrdev_region(device, sstore_device_count);
+    unregister_chrdev_region(device_num, sstore_device_count);
 }
 
 //---------------------------------------------------------------------------
 
+/*
+ * FOPS (file operations). This struct is a collection of function pointers
+ * that point to a char driver's methods.
+ */
 struct file_operations sstore_fops = {
         .owner = THIS_MODULE,
         .llseek = sstore_llseek,
@@ -139,11 +143,12 @@ struct file_operations sstore_fops = {
         .release = sstore_release
 };
 
+//tells kernel which functions run when driver is loaded/removed
 module_init(sstore_init);
 module_exit(sstore_exit);
 
 /*
- * Parameters
+ * Module Parameters
  */
 static unsigned long max_blobs = 1;
 static unsigned long max_size = 1024;
