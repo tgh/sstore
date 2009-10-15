@@ -6,10 +6,13 @@
 
 #include <linux/init.h>
 #include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/fs.h>           //for register_chrdev...
-#include <linux/types.h>        //for dev_t type
-#include <linux/kdev_t.h>       //for MKDEV, MAJOR, and MINOR macros
+#include <linux/moduleparam.h>  /* for module_param() */
+#include <linux/fs.h>           /* for struct file, struct file_operations,
+                                 * register_chrdev_region(),
+                                 * alloc_chrdev_region() */
+#include <linux/types.h>        /* for dev_t type (represents device numbers)*/
+#include <linux/kdev_t.h>       /* for MKDEV(), MAJOR(), and MINOR() macros */
+#include <linux/cdev.h>         /* for struct cdev */
 
 
 MODULE_LICENSE("Dual BSD/GPL");
@@ -17,17 +20,7 @@ MODULE_AUTHOR("Tyler Hayes");
 
 int sstore_major = 0;
 int sstore_device_count = 2;
-/*
-struct file_operations sstore_fops = {
-	.owner = THIS_MODULE,
-	.llseek = sstore_llseek,
-	.read = sstore_read,
-	.write = sstore_write,
-	.ioctl = sstore_ioctl,
-	.open = sstore_open,
-	.release = sstore_release
-};
-*/
+
 //---------------------------------------------------------------------------
 
 /*
@@ -35,7 +28,7 @@ struct file_operations sstore_fops = {
  */
 static int sstore_init(void)
 {
-    int result;
+    int result = 0;
     dev_t device = MKDEV(sstore_major, 0);
 
     printk(KERN_ALERT "In _init\n");
@@ -46,6 +39,7 @@ static int sstore_init(void)
     } else {
         result = alloc_chrdev_region(&device, sstore_major,
 						sstore_device_count, "sstore");
+        sstore_major = MAJOR(device);
     } 
     if (result < 0) {
 		printk(KERN_ALERT "Major number %d not found: sstore", 
@@ -126,7 +120,11 @@ int sstore_release(struct inode * i_node, struct file * file)
  */
 static void sstore_exit(void)
 {
+    dev_t device = MKDEV(sstore_major, 0);
+
 	printk(KERN_ALERT "In _exit\n");
+
+    unregister_chrdev_region(device, sstore_device_count);
 }
 
 //---------------------------------------------------------------------------
