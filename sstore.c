@@ -6,20 +6,24 @@
 
 #include <linux/init.h>
 #include <linux/module.h>
-#include <linux/moduleparam.h>  /* for module_param() */
+#include <linux/moduleparam.h>  /* for module_param(), so that the module can
+                                 * take arguments from the command line when
+                                 * using insmod */
 #include <linux/fs.h>           /* for struct file, struct file_operations,
                                  * register_chrdev_region(),
                                  * alloc_chrdev_region() */
-#include <linux/types.h>        /* for dev_t type (represents device numbers)*/
+#include <linux/types.h>        /* for dev_t (represents device numbers),
+                                 * ssize_t, size_t, loff_t types */
 #include <linux/kdev_t.h>       /* for MKDEV(), MAJOR(), and MINOR() macros */
 #include <linux/cdev.h>         /* for struct cdev */
+#include "sstore.h"             /* SSTORE_MAJOR, SSTORE_DEVICE_COUNT
+                                   struct sstore, struct blob */
 
 
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("Tyler Hayes");
 
-int sstore_major = 0;
-int sstore_device_count = 2;
+struct sstore * sstore_dev_array;
 
 //---------------------------------------------------------------------------
 
@@ -29,23 +33,36 @@ int sstore_device_count = 2;
 static int sstore_init(void)
 {
     int result = 0;
-    dev_t device_num = MKDEV(sstore_major, 0);
+    int i = 0;      //your standard for loop variable
+    dev_t device_num = MKDEV(SSTORE_MAJOR, 0);
 
     printk(KERN_ALERT "In _init\n");
 
-    if (sstore_major) {
-	    result = register_chrdev_region(device_num, sstore_device_count, 
+    if (SSTORE_MAJOR) {
+	    result = register_chrdev_region(device_num, SSTORE_DEVICE_COUNT, 
 								                                "sstore");
     } else {
-        result = alloc_chrdev_region(&device_num, sstore_major,
-						sstore_device_count, "sstore");
-        sstore_major = MAJOR(device_num);
+        result = alloc_chrdev_region(&device_num, SSTORE_MAJOR,
+						SSTORE_DEVICE_COUNT, "sstore");
+        SSTORE_MAJOR = MAJOR(device_num);
     } 
     if (result < 0) {
 		printk(KERN_ALERT "Major number %d not found: sstore", 
-								sstore_major);
+								SSTORE_MAJOR);
 		return result;
 	}
+
+    sstore_dev_array = kmalloc(SSTORE_DEVICE_COUNT * sizeof(struct sstore),
+                               GFP_KERNEL);
+    if (!sstore_dev_array) {
+        unregister_chrdev_region(device_num, SSTORE_DEVICE_COUNT);
+        return -ENOMEM;
+    }
+    memset(sstore_dev_array, 0, SSTORE_DEVICE_COUNT * sizeof (struct sstore));
+
+    for (i = 0; i < SSTORE_DEVICE_COUNT; ++i) {
+        
+    }
 
 	return 0;
 }
@@ -120,11 +137,11 @@ int sstore_release(struct inode * i_node, struct file * file)
  */
 static void sstore_exit(void)
 {
-    dev_t device_num = MKDEV(sstore_major, 0);
+    dev_t device_num = MKDEV(SSTORE_MAJOR, 0);
 
 	printk(KERN_ALERT "In _exit\n");
 
-    unregister_chrdev_region(device_num, sstore_device_count);
+    unregister_chrdev_region(device_num, SSTORE_DEVICE_COUNT);
 }
 
 //---------------------------------------------------------------------------
