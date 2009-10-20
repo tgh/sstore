@@ -11,6 +11,7 @@
 /* device major number (0 means it will be dynamically allocated by kernel)
  * in the init function */
 int SSTORE_MAJOR = 0;
+int SSTORE_MINOR = 0;
 
 //number of devices that can be associated with this driver
 const int SSTORE_DEVICE_COUNT = 2;
