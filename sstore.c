@@ -23,7 +23,26 @@
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("Tyler Hayes");
 
+/*
+ * Function decalarations
+ */
+static void sstore_cleanup_and_exit();
+
+
+/*
+ * Module Parameters
+ */
+static unsigned long max_blobs = 1;
+static unsigned long max_size = 1024;
+
+module_param(max_blobs, ulong, S_IRUGO);
+module_param(max_size, ulong, S_IRUGO);
+
+/*
+ * Global variables
+ */
 struct sstore * sstore_dev_array;
+
 
 //---------------------------------------------------------------------------
 
@@ -32,30 +51,49 @@ struct sstore * sstore_dev_array;
  */
 static int sstore_init(void)
 {
-    int result = 0;
-    int i = 0;      //your standard for loop variable
-    dev_t device_num = MKDEV(SSTORE_MAJOR, 0);
+    int result = 0;         //the return status of this function
+    int i = 0;              //your standard for-loop variable
+    dev_t device_num = 0;   //the device number (holds major and minor number)
 
-    printk(KERN_ALERT "In _init\n");
+    //DEBUG OUTPUT
+    printk(KERN_DEBUG "In _init\n");
 
+    /*
+     * Register the device.
+     * 
+     * When SSTORE_MAJOR is not 0 (when it is explicitly given a number by a
+     * programmer), the SSTORE_MAJOR and SSTORE_MINOR numbers are given to the
+     * MKDEV macro:
+     * MKDEV(ma,mi)	((ma)<<8 | (mi)), which stores these numbers into a 32-bit
+     * unsigned integer type (device_num) by dividing the bits up into a major
+     * number section and a minor number section.  device_num is then used to
+     * register the device with register_chrdev_region().  Otherwise,
+     * the kernel is used to get a number dynamically by sending the address
+     * of the device_num variable through the alloc_chrdev_region() function
+     * in the else clause. 
+     */
     if (SSTORE_MAJOR) {
+        device_num = MKDEV(SSTORE_MAJOR, SSTORE_MINOR);
 	    result = register_chrdev_region(device_num, SSTORE_DEVICE_COUNT, 
 								                                "sstore");
     } else {
         result = alloc_chrdev_region(&device_num, SSTORE_MAJOR,
 						SSTORE_DEVICE_COUNT, "sstore");
         SSTORE_MAJOR = MAJOR(device_num);
-    } 
+    }
+
+    //check result of registration
     if (result < 0) {
-		printk(KERN_ALERT "Major number %d not found: sstore", 
-								SSTORE_MAJOR);
+		printk(KERN_ALERT "Major number %d not found: sstore", SSTORE_MAJOR);
 		return result;
 	}
 
+    //allocate an array of sstore device structs
     sstore_dev_array = kmalloc(SSTORE_DEVICE_COUNT * sizeof(struct sstore),
                                GFP_KERNEL);
+    //check that the allocation was successful
     if (!sstore_dev_array) {
-        unregister_chrdev_region(device_num, SSTORE_DEVICE_COUNT);
+        sstore_cleanup_and_exit();
         return -ENOMEM;
     }
     memset(sstore_dev_array, 0, SSTORE_DEVICE_COUNT * sizeof (struct sstore));
@@ -135,7 +173,7 @@ int sstore_release(struct inode * i_node, struct file * file)
 /*
  * EXIT
  */
-static void sstore_exit(void)
+static void sstore_cleanup_and_exit(void)
 {
     dev_t device_num = MKDEV(SSTORE_MAJOR, 0);
 
@@ -162,12 +200,4 @@ struct file_operations sstore_fops = {
 
 //tells kernel which functions run when driver is loaded/removed
 module_init(sstore_init);
-module_exit(sstore_exit);
-
-/*
- * Module Parameters
- */
-static unsigned long max_blobs = 1;
-static unsigned long max_size = 1024;
-module_param(max_blobs, ulong, S_IRUGO);
-module_param(max_size, ulong, S_IRUGO);
+module_exit(sstore_cleanup_and_exit);
