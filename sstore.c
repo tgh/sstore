@@ -32,8 +32,8 @@ static void sstore_cleanup_and_exit(void);
 /*
  * Module Parameters
  */
-static unsigned long max_blobs = 1;
-static unsigned long max_size = 1024;
+unsigned long max_blobs = 1;
+unsigned long max_size = 1024;
 
 module_param(max_blobs, ulong, S_IRUGO);
 module_param(max_size, ulong, S_IRUGO);
@@ -103,7 +103,11 @@ static int sstore_init(void)
 
     //initialize each device in the array
     for (i = 0; i < SSTORE_DEVICE_COUNT; ++i) {
-
+        sstore_dev_array[i].list_head = 0;
+        sstore_dev_array[i].list_tail = 0;
+//
+//HERE->
+//      cdev_init(&sstore_dev_array[i], &sstore_fops);
     }
 
     //successful return
