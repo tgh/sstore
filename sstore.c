@@ -61,7 +61,7 @@ static int sstore_init(void)
     printk(KERN_DEBUG "In _init\n");
 
     /*
-     * Register the device.
+     * Get a range of minor numbers and register a region for devices.
      * 
      * When sstore_major is not 0 (when it is explicitly given a number by a
      * programmer), the sstore_major and sstore_minor numbers are given to the
@@ -90,7 +90,7 @@ static int sstore_init(void)
 		return result;
 	}
 
-    //allocate an array of sstore device structs
+    //allocate space for the devices (an array of sstore structs)
     sstore_dev_array = kmalloc(SSTORE_DEVICE_COUNT * sizeof(struct sstore),
                                GFP_KERNEL);
     //check that the allocation was successful, if not, exit gracefully
@@ -98,12 +98,15 @@ static int sstore_init(void)
         sstore_cleanup_and_exit();
         return -ENOMEM;
     }
+    //clean the array to null values
     memset(sstore_dev_array, 0, SSTORE_DEVICE_COUNT * sizeof (struct sstore));
 
+    //initialize each device in the array
     for (i = 0; i < SSTORE_DEVICE_COUNT; ++i) {
-        
+
     }
 
+    //successful return
 	return 0;
 }
 
