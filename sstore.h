@@ -10,8 +10,8 @@
 
 /* device major number (0 means it will be dynamically allocated by kernel)
  * in the init function */
-int SSTORE_MAJOR = 0;
-int SSTORE_MINOR = 0;
+#define SSTORE_MAJOR 0
+#define SSTORE_MINOR 0
 
 //number of devices that can be associated with this driver
 const int SSTORE_DEVICE_COUNT = 2;
@@ -30,5 +30,5 @@ struct blob {
 //the device structure
 struct sstore {
     struct blob * blob_list;
-    struct cdev * cdev;
+    struct cdev cdev;
 };
