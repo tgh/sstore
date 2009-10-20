@@ -26,7 +26,7 @@ MODULE_AUTHOR("Tyler Hayes");
 /*
  * Function decalarations
  */
-static void sstore_cleanup_and_exit();
+static void sstore_cleanup_and_exit(void);
 
 
 /*
@@ -41,6 +41,8 @@ module_param(max_size, ulong, S_IRUGO);
 /*
  * Global variables
  */
+int sstore_major = SSTORE_MAJOR;
+int sstore_minor = SSTORE_MINOR;
 struct sstore * sstore_dev_array;
 
 
@@ -61,8 +63,8 @@ static int sstore_init(void)
     /*
      * Register the device.
      * 
-     * When SSTORE_MAJOR is not 0 (when it is explicitly given a number by a
-     * programmer), the SSTORE_MAJOR and SSTORE_MINOR numbers are given to the
+     * When sstore_major is not 0 (when it is explicitly given a number by a
+     * programmer), the sstore_major and sstore_minor numbers are given to the
      * MKDEV macro:
      * MKDEV(ma,mi)	((ma)<<8 | (mi)), which stores these numbers into a 32-bit
      * unsigned integer type (device_num) by dividing the bits up into a major
@@ -72,26 +74,26 @@ static int sstore_init(void)
      * of the device_num variable through the alloc_chrdev_region() function
      * in the else clause. 
      */
-    if (SSTORE_MAJOR) {
-        device_num = MKDEV(SSTORE_MAJOR, SSTORE_MINOR);
+    if (sstore_major) {
+        device_num = MKDEV(sstore_major, sstore_minor);
 	    result = register_chrdev_region(device_num, SSTORE_DEVICE_COUNT, 
 								                                "sstore");
     } else {
-        result = alloc_chrdev_region(&device_num, SSTORE_MAJOR,
+        result = alloc_chrdev_region(&device_num, sstore_major,
 						SSTORE_DEVICE_COUNT, "sstore");
-        SSTORE_MAJOR = MAJOR(device_num);
+        sstore_major = MAJOR(device_num);
     }
 
     //check result of registration
     if (result < 0) {
-		printk(KERN_ALERT "Major number %d not found: sstore", SSTORE_MAJOR);
+		printk(KERN_ALERT "Major number %d not found: sstore", sstore_major);
 		return result;
 	}
 
     //allocate an array of sstore device structs
     sstore_dev_array = kmalloc(SSTORE_DEVICE_COUNT * sizeof(struct sstore),
                                GFP_KERNEL);
-    //check that the allocation was successful
+    //check that the allocation was successful, if not, exit gracefully
     if (!sstore_dev_array) {
         sstore_cleanup_and_exit();
         return -ENOMEM;
@@ -175,10 +177,24 @@ int sstore_release(struct inode * i_node, struct file * file)
  */
 static void sstore_cleanup_and_exit(void)
 {
-    dev_t device_num = MKDEV(SSTORE_MAJOR, 0);
+    int i = 0;
+    dev_t device_num = MKDEV(sstore_major, sstore_minor);
 
-	printk(KERN_ALERT "In _exit\n");
+    //DEBUG OUPUT
+	printk(KERN_DEBUG "In _exit\n");
 
+    //free the allocated devices
+    if (sstore_dev_array) {
+        for (i = 0; i < SSTORE_DEVICE_COUNT; ++i) {
+            cdev_del(&sstore_dev_array[i].cdev);
+        }
+        kfree(sstore_dev_array);
+    }
+
+    /* 
+     * Unregister devices (there is guaranteed to be registered devices here 
+     * since init() takes care of registration failure)
+     */
     unregister_chrdev_region(device_num, SSTORE_DEVICE_COUNT);
 }
 
