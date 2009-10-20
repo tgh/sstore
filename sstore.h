@@ -23,12 +23,14 @@ struct blob {
     char * junk;
     int crap;
     int stuff;
+    struct blob * next;
 };
 
 //----------------------------------------------------------------------------
 
 //the device structure
 struct sstore {
-    struct blob * blob_list;
+    struct blob * list_head;
+    struct blob * list_tail;
     struct cdev cdev;
 };
