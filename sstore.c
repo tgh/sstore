@@ -21,11 +21,8 @@
                                    struct sstore, struct blob */
 
 
-MODULE_LICENSE("Dual BSD/GPL");
-MODULE_AUTHOR("Tyler Hayes");
-
 /*
- * Function decalarations
+ * Function prototypes
  */
 static int sstore_init(void);
 int sstore_open(struct inode * i_node, struct file * file);
@@ -76,7 +73,7 @@ struct file_operations sstore_fops = {
 /*
  * INIT
  */
-static int sstore_init(void) {
+static int __init sstore_init(void) {
     int result = 0; //the return status of this function
     int i = 0; //your standard for-loop variable
     int error = 0;  //to catch any errors returned from certain function calls
@@ -135,8 +132,10 @@ static int sstore_init(void) {
         sstore_dev_array[i].cdev.ops = &sstore_fops;
         device_num = MKDEV(sstore_major, sstore_minor + i);
         error = cdev_add(&sstore_dev_array[i].cdev, device_num, 1);
-	if (error)
+	    if (error) {
             printk(KERN_ALERT "Error %d adding device sstore%d", error, i);
+            sstore_cleanup_and_exit();
+        }
     }
 
     //successful return
@@ -233,3 +232,6 @@ static void sstore_cleanup_and_exit(void) {
 //tells kernel which functions run when driver is loaded/removed
 module_init(sstore_init);
 module_exit(sstore_cleanup_and_exit);
+
+MODULE_LICENSE("Dual BSD/GPL");
+MODULE_AUTHOR("Tyler Hayes");
