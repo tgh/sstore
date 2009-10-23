@@ -56,7 +56,7 @@ static int sstore_init(void)
  * OPEN
  */
 int sstore_open(struct inode * i_node, struct file * file)
-{
+{    
 	return 0;
 }
 
