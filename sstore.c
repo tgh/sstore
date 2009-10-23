@@ -50,8 +50,8 @@ module_param(max_size, ulong, S_IRUGO);
 /*
  * Global variables
  */
-int sstore_major = SSTORE_MAJOR;
-int sstore_minor = SSTORE_MINOR;
+unsigned int sstore_major = SSTORE_MAJOR;
+unsigned int sstore_minor = SSTORE_MINOR;
 struct sstore * sstore_dev_array;
 
 /*
@@ -101,7 +101,7 @@ static int __init sstore_init(void) {
         result = register_chrdev_region(device_num, SSTORE_DEVICE_COUNT,
                 "sstore");
     } else {
-        result = alloc_chrdev_region(&device_num, sstore_major,
+        result = alloc_chrdev_region(&device_num, sstore_minor,
                 SSTORE_DEVICE_COUNT, "sstore");
         sstore_major = MAJOR(device_num);
     }
