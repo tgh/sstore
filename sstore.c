@@ -222,7 +222,8 @@ static void sstore_cleanup_and_exit(void) {
 
     /* 
      * Unregister devices (there is guaranteed to be registered devices here 
-     * since init() takes care of registration failure)
+     * since init() takes care of registration failure)--in other words, free
+     * the region of device numbers so the kernel can reuse them.
      */
     unregister_chrdev_region(device_num, SSTORE_DEVICE_COUNT);
 }
