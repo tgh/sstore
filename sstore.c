@@ -148,7 +148,11 @@ static int __init sstore_init(void) {
  * OPEN
  */
 
-int sstore_open(struct inode * i_node, struct file * file) {
+int sstore_open(struct inode * i_node, struct file * filp) {
+    //identify which device is being opened
+    struct sstore * device;
+    device = container_of(i_node->cdev, struct sstore, cdev); 
+    filp->private_data = device;
     return 0;
 }
 
