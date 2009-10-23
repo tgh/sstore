@@ -36,23 +36,23 @@ int sstore_ioctl(struct inode * i_node, struct file * file, unsigned int ui,
 int sstore_release(struct inode * i_node, struct file * file);
 static void sstore_cleanup_and_exit(void);
 
-
-
-/*
- * Module Parameters
- */
-unsigned long max_blobs = 1;
-unsigned long max_size = 1024;
-
-module_param(max_blobs, ulong, S_IRUGO);
-module_param(max_size, ulong, S_IRUGO);
-
 /*
  * Global variables
  */
 unsigned int sstore_major = SSTORE_MAJOR;
 unsigned int sstore_minor = SSTORE_MINOR;
 struct sstore * sstore_dev_array;
+
+/*
+ * Module Parameters -- S_IRUGO is a permissions mask that means this parameter
+ * can be read by the world, but cannot be changed.
+ */
+unsigned long max_blobs = 1;
+unsigned long max_size = 1024;
+module_param(max_blobs, ulong, S_IRUGO);
+module_param(max_size, ulong, S_IRUGO);
+module_param(sstore_major, uint, S_IRUGO);
+module_param(sstore_minor, uint, S_IRUGO);
 
 /*
  * FOPS (file operations). This struct is a collection of function pointers
