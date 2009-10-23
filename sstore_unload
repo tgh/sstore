@@ -1,11 +1,9 @@
 #!/bin/bash
-module = "sstore"
-device = "sstore"
+module="sstore"
+device="sstore"
 
 #unplug the module
 /sbin/rmmod $module $* || exit 1
 
 #remove the device files
 rm -f /dev/${device}[0-1] /dev/${device}
-
-exit 0
