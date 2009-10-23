@@ -1,0 +1,24 @@
+#!/bin/bash
+module = "sstore"
+device = "sstore"
+mode = "664"
+
+#insert module or exit if fail
+/sbin/insmod ./$module.ko $* || exit 1
+
+#remove any sstore related devices left behind
+rm -f /dev/${device}[0-1]
+
+#grab the dynamically allocated major number from /proc/devices
+major = $(awk "\$2==\"$module\" {print \$1}" /proc/devices)
+
+#create device files
+mknod /dev/${device}0 c $major 0
+mknod /dev/${device}1 c $major 1
+
+#change device permissions.  if "staff" isn't in this distro, use "wheel"
+group = "staff"
+grep -q '^staff:' /etc/group || group = "wheel"
+
+chgrp $group /dev/${device}[0-1]
+chmod $mode  /dev/${device}[0-1]
