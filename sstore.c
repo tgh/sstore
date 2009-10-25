@@ -128,6 +128,7 @@ static int __init sstore_init(void) {
         sstore_dev_array[i].list_head = 0;
         sstore_dev_array[i].list_tail = 0;
         sstore_dev_array[i].blob_count = 0;
+        sstore_dev_array[i].total_data_size = 0;
         cdev_init(&sstore_dev_array[i].cdev, &sstore_fops);
         sstore_dev_array[i].cdev.owner = THIS_MODULE;
         sstore_dev_array[i].cdev.ops = &sstore_fops;
