@@ -145,14 +145,17 @@ static int __init sstore_init(void) {
 //---------------------------------------------------------------------------
 
 /*
- * OPEN
+ * OPEN - this funciton is called when the device is opened in userspace (when
+ * the "file" /dev/sstore0 or /dev/sstore1 is opened, for example)
  */
 
 int sstore_open(struct inode * i_node, struct file * filp) {
     //identify which device is being opened
     struct sstore * device;
-    device = container_of(i_node->cdev, struct sstore, cdev); 
+    device = container_of(i_node->cdev, struct sstore, cdev);
+    //store this sstore struct in the private_data field for future use
     filp->private_data = device;
+
     return 0;
 }
 
@@ -161,7 +164,7 @@ int sstore_open(struct inode * i_node, struct file * filp) {
 /*
  * LLSEEK
  */
-loff_t sstore_llseek(struct file * file, loff_t offset, int i) {
+loff_t sstore_llseek(struct file * filp, loff_t offset, int i) {
     return offset;
 }
 
@@ -170,7 +173,7 @@ loff_t sstore_llseek(struct file * file, loff_t offset, int i) {
 /*
  * READ
  */
-ssize_t sstore_read(struct file * file, char __user * user, size_t size,
+ssize_t sstore_read(struct file * filp, char __user * user, size_t size,
         loff_t * offset) {
     return size;
 }
@@ -180,7 +183,7 @@ ssize_t sstore_read(struct file * file, char __user * user, size_t size,
 /*
  * WRITE
  */
-ssize_t sstore_write(struct file * file, const char __user * user,
+ssize_t sstore_write(struct file * filp, const char __user * user,
         size_t size, loff_t * offset) {
     return size;
 }
@@ -190,7 +193,7 @@ ssize_t sstore_write(struct file * file, const char __user * user,
 /*
  * IOCTL
  */
-int sstore_ioctl(struct inode * i_node, struct file * file, unsigned int ui,
+int sstore_ioctl(struct inode * i_node, struct file * filp, unsigned int ui,
         unsigned long ul) {
     return 0;
 }
@@ -200,7 +203,7 @@ int sstore_ioctl(struct inode * i_node, struct file * file, unsigned int ui,
 /*
  * RELEASE
  */
-int sstore_release(struct inode * i_node, struct file * file) {
+int sstore_release(struct inode * i_node, struct file * filp) {
     return 0;
 }
 
