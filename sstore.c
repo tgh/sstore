@@ -184,36 +184,66 @@ loff_t sstore_llseek(struct file * filp, loff_t offset, int i) {
 /*
  * READ
  */
-ssize_t sstore_read(struct file * filp, char __user * user,
+ssize_t sstore_read(struct file * filp, char __user * buffer,
                     size_t requested_index, loff_t * file_position) {
     struct sstore * device = filp->private_data;
     struct blob * blob;
-    ssize_t return_value = 0;
+    int current_index = 0;
+    int error = 0;
+    int bytes_read = 0;
+    int i = 0;
 
     //acquire mutex lock
     // TO DO
 
+    //return inavlid argument error if requested index goes beyond maximum blobs
+    if (requested_index > max_blobs) {
+        //release mutex lock (do we need it for max_blobs???)
+        // TO DO
+        return -EINVAL;
+    }
+
+    //check that there is a blob list allocated, and wait for one if there isn't
     if (!device->list_head)
         //block (wait for data)
         // TO DO
-    if (requested_index > device->list_tail->index)
+
+    //check that requested index is beyond the end of list, and wait if it is
+    if (requested_index > device->blob_count - 1)
         //block (wait for data at requested index)
         // TO DO
 
     //traverse the list to the requested index
-    // TO DO
-    //only read the rest of the blob's junk array if requested size is too large
-    // TO DO
-    //copy data to user
-    // TO DO
-    //set file position
-    // TO DO
-    //set return value
-    // TO DO
+    current_index = device->current_blob->index;
+    if (requested_index < current_index) {
+        blob = device->list_head;
+        current_index = 0;
+    }
+    else
+        blob = device->current_blob;
+    while (requested_index != current_index) {
+        blob = blob->next;
+        current_index = blob->index;
+    }
+    device->current_blob = blob; //redundant if requested index == current index
+   
+    //determine size of data transfer in bytes (the length of junk array)
+    for (i = 0; junk[i] != '\0'; ++i) {
+        ++bytes_read;
+    }
+
+    //copy the data to the user and check the return value for error
+    error = copy_to_user(buffer, blob->junk, bytes_read);
+    if (error) {
+        //release lock
+        // TO DO
+        return -EFAULT;
+    }
+
     //release mutex lock
     // TO DO
 
-    return return_value;
+    return bytes_read;
 }
 
 //---------------------------------------------------------------------------
