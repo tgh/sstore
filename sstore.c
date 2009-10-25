@@ -49,8 +49,8 @@ struct sstore * sstore_dev_array;
  */
 unsigned int max_blobs = 1;
 unsigned int max_size = 1024;
-module_param(max_blobs, ulong, S_IRUGO);
-module_param(max_size, ulong, S_IRUGO);
+module_param(max_blobs, uint, S_IRUGO);
+module_param(max_size, uint, S_IRUGO);
 module_param(sstore_major, uint, S_IRUGO);
 module_param(sstore_minor, uint, S_IRUGO);
 
@@ -149,10 +149,10 @@ static int __init sstore_init(void) {
  * the "file" /dev/sstore0 or /dev/sstore1 is opened, for example)
  */
 
-int sstore_open(struct inode * i_node, struct file * filp) {
+int sstore_open(struct inode * inode, struct file * filp) {
     //identify which device is being opened
     struct sstore * device;
-    device = container_of(i_node->cdev, struct sstore, cdev);
+    device = container_of(inode->i_cdev, struct sstore, cdev);
     /*
      * store this sstore struct in the private_data field so that calls to read,
      * write, and ioctl--which will pass in the same file struct pointer--can
@@ -197,7 +197,7 @@ ssize_t sstore_write(struct file * filp, const char __user * user,
 /*
  * IOCTL
  */
-int sstore_ioctl(struct inode * i_node, struct file * filp, unsigned int ui,
+int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int ui,
         unsigned long ul) {
     return 0;
 }
@@ -207,7 +207,7 @@ int sstore_ioctl(struct inode * i_node, struct file * filp, unsigned int ui,
 /*
  * RELEASE
  */
-int sstore_release(struct inode * i_node, struct file * filp) {
+int sstore_release(struct inode * inode, struct file * filp) {
     return 0;
 }
 
