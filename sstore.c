@@ -125,8 +125,8 @@ static int __init sstore_init(void) {
 
     //initialize each device in the array
     for (i = 0; i < SSTORE_DEVICE_COUNT; ++i) {
-        sstore_dev_array[i].list_head = 0;
-        sstore_dev_array[i].list_tail = 0;
+        sstore_dev_array[i].list_head = NULL;
+        sstore_dev_array[i].list_tail = NULL;
         sstore_dev_array[i].blob_count = 0;
         sstore_dev_array[i].total_data_size = 0;
         cdev_init(&sstore_dev_array[i].cdev, &sstore_fops);
@@ -179,10 +179,23 @@ loff_t sstore_llseek(struct file * filp, loff_t offset, int i) {
 /*
  * READ
  */
-ssize_t sstore_read(struct file * filp, char __user * user, size_t size,
-        loff_t * file_position) {
+ssize_t sstore_read(struct file * filp, char __user * user,
+                    size_t size_of_request, loff_t * file_position) {
     struct sstore * device = filp->private_data;
+    struct blob * blob;
     ssize_t return_value = 0;
+
+    if (*file_position >= device->total_data_size)
+        return return_value;
+    /*
+     * set the requsted size to the size of the rest of the data in the file if
+     * the file position is less than the size requested from the end of the
+     * file.
+     */
+    if (*file_position + size_of_request > device->total_data_size)
+        size_of_request = device->total_data_size - *file_position;
+
+    
 
     return return_value;
 }
