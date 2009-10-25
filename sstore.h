@@ -32,7 +32,8 @@ struct blob {
 
 //the device structure
 struct sstore {
-    unsigned int blob_count; 
+    unsigned int blob_count;
+    unsigned int total_data_size;
     struct blob * list_head;
     struct blob * list_tail;
     struct cdev cdev;
