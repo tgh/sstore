@@ -47,8 +47,8 @@ struct sstore * sstore_dev_array;
  * Module Parameters -- S_IRUGO is a permissions mask that means this parameter
  * can be read by the world, but cannot be changed.
  */
-unsigned long max_blobs = 1;
-unsigned long max_size = 1024;
+unsigned int max_blobs = 1;
+unsigned int max_size = 1024;
 module_param(max_blobs, ulong, S_IRUGO);
 module_param(max_size, ulong, S_IRUGO);
 module_param(sstore_major, uint, S_IRUGO);
@@ -153,7 +153,11 @@ int sstore_open(struct inode * i_node, struct file * filp) {
     //identify which device is being opened
     struct sstore * device;
     device = container_of(i_node->cdev, struct sstore, cdev);
-    //store this sstore struct in the private_data field for future use
+    /*
+     * store this sstore struct in the private_data field so that calls to read,
+     * write, and ioctl--which will pass in the same file struct pointer--can
+     * access the data being stored in the sstore struct's blob list. 
+     */
     filp->private_data = device;
 
     return 0;
