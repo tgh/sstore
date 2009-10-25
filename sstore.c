@@ -128,8 +128,8 @@ static int __init sstore_init(void) {
     for (i = 0; i < SSTORE_DEVICE_COUNT; ++i) {
         sstore_dev_array[i].list_head = NULL;
         sstore_dev_array[i].list_tail = NULL;
+        sstore_dev_array[i].current_blob = NULL;
         sstore_dev_array[i].blob_count = 0;
-        sstore_dev_array[i].total_data_size = 0;
         cdev_init(&sstore_dev_array[i].cdev, &sstore_fops);
         sstore_dev_array[i].cdev.owner = THIS_MODULE;
         sstore_dev_array[i].cdev.ops = &sstore_fops;
@@ -185,7 +185,7 @@ loff_t sstore_llseek(struct file * filp, loff_t offset, int i) {
  * READ
  */
 ssize_t sstore_read(struct file * filp, char __user * user,
-                    size_t size_of_request, loff_t * file_position) {
+                    size_t requested_index, loff_t * file_position) {
     struct sstore * device = filp->private_data;
     struct blob * blob;
     ssize_t return_value = 0;
@@ -193,19 +193,14 @@ ssize_t sstore_read(struct file * filp, char __user * user,
     //acquire mutex lock
     // TO DO
 
-    if (*file_position >= device->total_data_size)
-        return return_value;
-    /*
-     * set the requsted size to the size of the rest of the data in the file if
-     * the file position is less than the size requested from the end of the
-     * file.
-     */
-    if (*file_position + size_of_request > device->total_data_size)
-        size_of_request = device->total_data_size - *file_position;
+    if (!device->list_head)
+        //block (wait for data)
+        // TO DO
+    if (requested_index > device->list_tail->index)
+        //block (wait for data at requested index)
+        // TO DO
 
-    //translate the file position to a location in the data
-    // TO DO
-    //check for null pointer
+    //traverse the list to the requested index
     // TO DO
     //only read the rest of the blob's junk array if requested size is too large
     // TO DO
