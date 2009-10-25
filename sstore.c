@@ -127,6 +127,7 @@ static int __init sstore_init(void) {
     for (i = 0; i < SSTORE_DEVICE_COUNT; ++i) {
         sstore_dev_array[i].list_head = 0;
         sstore_dev_array[i].list_tail = 0;
+        sstore_dev_array[i].blob_count = 0;
         cdev_init(&sstore_dev_array[i].cdev, &sstore_fops);
         sstore_dev_array[i].cdev.owner = THIS_MODULE;
         sstore_dev_array[i].cdev.ops = &sstore_fops;
@@ -178,8 +179,11 @@ loff_t sstore_llseek(struct file * filp, loff_t offset, int i) {
  * READ
  */
 ssize_t sstore_read(struct file * filp, char __user * user, size_t size,
-        loff_t * offset) {
-    return size;
+        loff_t * file_position) {
+    struct sstore * device = filp->private_data;
+    ssize_t return_value = 0;
+
+    return return_value;
 }
 
 //---------------------------------------------------------------------------
