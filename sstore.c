@@ -17,6 +17,7 @@
                                  * ssize_t, size_t, loff_t types */
 #include <linux/kdev_t.h>       /* for MKDEV(), MAJOR(), and MINOR() macros */
 #include <linux/cdev.h>         /* for struct cdev */
+#include <linux/sched.h>        /* for current process info */
 #include "sstore.h"             /* SSTORE_MAJOR, SSTORE_DEVICE_COUNT
                                    struct sstore, struct blob */
 
@@ -152,8 +153,12 @@ static int __init sstore_init(void) {
  */
 
 int sstore_open(struct inode * inode, struct file * filp) {
-    //identify which device is being opened
     struct sstore * device;
+
+    //check that current process has root priveleges
+    // TO DO
+
+    //identify which device is being opened
     device = container_of(inode->i_cdev, struct sstore, cdev);
     /*
      * store this sstore struct in the private_data field so that calls to read,
@@ -185,6 +190,9 @@ ssize_t sstore_read(struct file * filp, char __user * user,
     struct blob * blob;
     ssize_t return_value = 0;
 
+    //acquire mutex lock
+    // TO DO
+
     if (*file_position >= device->total_data_size)
         return return_value;
     /*
@@ -195,7 +203,20 @@ ssize_t sstore_read(struct file * filp, char __user * user,
     if (*file_position + size_of_request > device->total_data_size)
         size_of_request = device->total_data_size - *file_position;
 
-    
+    //translate the file position to a location in the data
+    // TO DO
+    //check for null pointer
+    // TO DO
+    //only read the rest of the blob's junk array if requested size is too large
+    // TO DO
+    //copy data to user
+    // TO DO
+    //set file position
+    // TO DO
+    //set return value
+    // TO DO
+    //release mutex lock
+    // TO DO
 
     return return_value;
 }
