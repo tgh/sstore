@@ -35,7 +35,6 @@ struct blob {
 struct sstore {
     unsigned int blob_count;
     struct blob * list_head;
-    struct blob * list_tail;
     struct blob * current_blob;
     struct cdev cdev;
 };
