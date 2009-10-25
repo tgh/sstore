@@ -25,8 +25,6 @@ const int SSTORE_DEVICE_COUNT = 2;
 //that which we are storing with this device
 struct blob {
     char * junk;
-    int crap;
-    int stuff;
     struct blob * next;
 };
 
