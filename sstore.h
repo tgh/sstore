@@ -24,6 +24,7 @@ const int SSTORE_DEVICE_COUNT = 2;
 
 //that which we are storing with this device
 struct blob {
+    int index;
     char * junk;
     struct blob * next;
 };
@@ -33,8 +34,8 @@ struct blob {
 //the device structure
 struct sstore {
     unsigned int blob_count;
-    unsigned int total_data_size;
     struct blob * list_head;
     struct blob * list_tail;
+    struct blob * current_blob;
     struct cdev cdev;
 };
