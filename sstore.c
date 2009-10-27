@@ -185,18 +185,24 @@ loff_t sstore_llseek(struct file * filp, loff_t offset, int i) {
 /*
  * READ
  */
-ssize_t sstore_read(struct file * filp, char __user * buffer,
-                    size_t requested_index, loff_t * file_position) {
+ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
+                                                    loff_t * file_position) {
     struct sstore * device = filp->private_data;
     struct blob * blob;
     int current_index = 0;
     int error = 0;
     int bytes_read = 0;
     int i = 0;
+    /*
+     * DETAILED COMMENT NEEDED HERE FOR THE NEXT 3 LINES RE: USER STRUCT
+     */
+    char * data = buffer + 8;
+    int requested_index = *buffer;
+    count = *(buffer + 4);
 
     //acquire mutex lock
     // TO DO
-
+    
     //return inavlid argument error if requested index goes beyond maximum blobs
     if (requested_index > max_blobs) {
         //release mutex lock (do we need it for max_blobs???)
@@ -228,13 +234,18 @@ ssize_t sstore_read(struct file * filp, char __user * buffer,
     }
     device->current_blob = blob; //redundant if requested index == current index
    
-    //determine size of data transfer in bytes (the length of junk array)
-    for (i = 0; blob->junk[i] != '\0'; ++i) {
+    /*
+     * determine the amount of data to copy to the user. it will either be the
+     * amount requested by the user if there is enough data in the junk array,
+     * or it will be whatever is in the junk array if the requested amount is
+     * too big.
+     */
+    for (i = 0; blob->junk[i] != '\0' && i < count; ++i) {
         ++bytes_read;
     }
 
     //copy the data to the user and check the return value for error
-    error = copy_to_user(buffer, blob->junk, bytes_read);
+    error = copy_to_user(data, blob->junk, bytes_read);
     if (error) {
         //release lock
         // TO DO
@@ -244,6 +255,7 @@ ssize_t sstore_read(struct file * filp, char __user * buffer,
     //release mutex lock
     // TO DO
 
+    //tell the user how many bytes were read
     return bytes_read;
 }
 
