@@ -18,6 +18,7 @@
 #include <linux/kdev_t.h>       /* for MKDEV(), MAJOR(), and MINOR() macros */
 #include <linux/cdev.h>         /* for struct cdev */
 #include <linux/sched.h>        /* for current process info */
+#include <linux/uaccess.h>      /* for copy_to_user() and copy_from_user() */
 #include "sstore.h"             /* SSTORE_MAJOR, SSTORE_DEVICE_COUNT
                                    struct sstore, struct blob */
 
@@ -127,7 +128,6 @@ static int __init sstore_init(void) {
     //initialize each device in the array
     for (i = 0; i < SSTORE_DEVICE_COUNT; ++i) {
         sstore_dev_array[i].list_head = NULL;
-        sstore_dev_array[i].list_tail = NULL;
         sstore_dev_array[i].current_blob = NULL;
         sstore_dev_array[i].blob_count = 0;
         cdev_init(&sstore_dev_array[i].cdev, &sstore_fops);
@@ -156,7 +156,8 @@ int sstore_open(struct inode * inode, struct file * filp) {
     struct sstore * device;
 
     //check that current process has root priveleges
-    // TO DO
+    if (!capable(CAP_SYS_ADMIN))
+        return -EPERM;
 
     //identify which device is being opened
     device = container_of(inode->i_cdev, struct sstore, cdev);
@@ -228,7 +229,7 @@ ssize_t sstore_read(struct file * filp, char __user * buffer,
     device->current_blob = blob; //redundant if requested index == current index
    
     //determine size of data transfer in bytes (the length of junk array)
-    for (i = 0; junk[i] != '\0'; ++i) {
+    for (i = 0; blob->junk[i] != '\0'; ++i) {
         ++bytes_read;
     }
 
