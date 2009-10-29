@@ -83,6 +83,7 @@ static int __init sstore_init(void) {
 
     //DEBUG OUTPUT
     printk(KERN_DEBUG "In _init\n");
+    printk(KERN_DEBUG "max_blobs = %d, max_size = %d\n", max_blobs, max_size);
 
     /*
      * Get a range of minor numbers and register a region for devices.
