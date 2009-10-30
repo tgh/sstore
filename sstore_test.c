@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 struct readWriteBuffer {
     int index;
     int size;
@@ -12,6 +14,9 @@ int main ()
 
     //test open
     sstore_device = open("/dev/sstore0", "r");
+    if (sstore_device < 0)
+        printf("\nDevice failed to open.\n");
+
     //test read
 
     //test write
@@ -20,7 +25,8 @@ int main ()
     buf.data = "Hello world";
 
     //test close
-    close(sstore_device);
+    if (sstore_device == 0)
+        close(sstore_device);
 
     return 0;
 }
