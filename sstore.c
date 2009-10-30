@@ -302,7 +302,7 @@ static void sstore_cleanup_and_exit(void) {
     dev_t device_num = MKDEV(sstore_major, sstore_minor);
 
     //DEBUG OUPUT
-    printk(KERN_DEBUG "In _exit\n");
+    printk(KERN_DEBUG "In sstore_exit\n");
 
     //free the allocated devices
     if (sstore_dev_array) {
