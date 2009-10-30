@@ -82,8 +82,8 @@ static int __init sstore_init(void) {
     dev_t device_num = 0; //the device number (holds major and minor number)
 
     //DEBUG OUTPUT
-    printk(KERN_DEBUG "In _init\n");
-    printk(KERN_DEBUG "max_blobs = %d, max_size = %d\n", max_blobs, max_size);
+    printk(KERN_DEBUG "\nIn sstore_init()");
+    printk(KERN_DEBUG "\nmax_blobs = %d, max_size = %d", max_blobs, max_size);
 
     /*
      * Get a range of minor numbers and register a region for devices.
@@ -155,6 +155,9 @@ static int __init sstore_init(void) {
 
 int sstore_open(struct inode * inode, struct file * filp) {
     struct sstore * device;
+
+    //DEBUG OUPUT
+    printk(KERN_DEBUG "\nIn sstore_open()");
 
     //check that current process has root priveleges
     if (!capable(CAP_SYS_ADMIN))
