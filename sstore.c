@@ -128,6 +128,7 @@ static int __init sstore_init(void) {
 
     //initialize each device in the array
     for (i = 0; i < SSTORE_DEVICE_COUNT; ++i) {
+        sstore_dev_array[i].fd_count = 0;
         sstore_dev_array[i].list_head = NULL;
         sstore_dev_array[i].current_blob = NULL;
         sstore_dev_array[i].blob_count = 0;
@@ -165,6 +166,9 @@ int sstore_open(struct inode * inode, struct file * filp) {
 
     //identify which device is being opened
     device = container_of(inode->i_cdev, struct sstore, cdev);
+
+    if (device)
+        ++device->fd_count;
     /*
      * store this sstore struct in the private_data field so that calls to read,
      * write, and ioctl--which will pass in the same file struct pointer--can
@@ -289,8 +293,40 @@ int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int ui,
  * RELEASE
  */
 int sstore_release(struct inode * inode, struct file * filp) {
+    struct sstore * device;
+    /*
+     * these two blob pointers are used for traversing the blob list to free
+     * them upon last close (when fd_count is zero)
+     */
+    struct blob * current;
+    struct blob * previous;
+
     //DEBUG OUTPUT
     printk(KERN_DEBUG "In sstore_release\n");
+
+    //identify which device is being closed
+    device = container_of(inode->i_cdev, struct sstore, cdev);
+
+    //aqcuire lock
+    //TO DO
+
+    if (device->fd_count) {
+        //decrement the number of open file descriptors
+        --device->fd_count;
+        //free the blob list when this is the last close
+        if (device->fd_count == 0) {
+            current = device->list_head;
+            previous = current;
+            while (current) {
+                current = current->next;
+                kfree(previous);
+                previous = current;
+            }
+        }
+    }
+
+    //release lock
+    //TO DO    
 
     return 0;
 }
