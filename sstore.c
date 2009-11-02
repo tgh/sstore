@@ -167,8 +167,11 @@ int sstore_open(struct inode * inode, struct file * filp) {
     //identify which device is being opened
     device = container_of(inode->i_cdev, struct sstore, cdev);
 
-    if (device)
+    if (device) {
         ++device->fd_count;
+        //DEBUG OUTPUT
+        printk(KERN_DEBUG "\nopen count in open = %d\n", device->fd_count);
+    }
     /*
      * store this sstore struct in the private_data field so that calls to read,
      * write, and ioctl--which will pass in the same file struct pointer--can
@@ -298,8 +301,8 @@ int sstore_release(struct inode * inode, struct file * filp) {
      * these two blob pointers are used for traversing the blob list to free
      * them upon last close (when fd_count is zero)
      */
-    struct blob * current;
-    struct blob * previous;
+    struct blob * current_blob;
+    struct blob * previous_blob;
 
     //DEBUG OUTPUT
     printk(KERN_DEBUG "In sstore_release\n");
@@ -313,14 +316,16 @@ int sstore_release(struct inode * inode, struct file * filp) {
     if (device->fd_count) {
         //decrement the number of open file descriptors
         --device->fd_count;
+        //DEBUG OUTPUT
+        printk(KERN_DEBUG "\nopen count in release = %d\n", device->fd_count);
         //free the blob list when this is the last close
         if (device->fd_count == 0) {
-            current = device->list_head;
-            previous = current;
-            while (current) {
-                current = current->next;
-                kfree(previous);
-                previous = current;
+            current_blob = device->list_head;
+            previous_blob = current_blob;
+            while (current_blob) {
+                current_blob = current_blob->next;
+                kfree(previous_blob);
+                previous_blob = current_blob;
             }
         }
     }
