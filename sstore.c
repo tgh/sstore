@@ -205,11 +205,34 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
     int bytes_read = 0;
     int i = 0;
     /*
-     * DETAILED COMMENT NEEDED HERE FOR THE NEXT 3 LINES RE: USER STRUCT
+     * TO DO: DETAILED COMMENT NEEDED HERE FOR THE NEXT 3 LINES RE: USER STRUCT
      */
-    char * data = buffer + 8;
+    char __user * data = buffer + 8;
     int requested_index = *buffer;
+    //DEBUG OUTPUT
+    printk(KERN_DEBUG "\nrequested index in read = %d\n", requested_index);
     count = *(buffer + 4);
+    //DEBUG OUTPUT
+    printk(KERN_DEBUG "\nrequested size of data in read = %d\n", count);
+
+    device->list_head = kmalloc(sizeof (struct blob), GFP_KERNEL);
+printk(KERN_DEBUG "\nblob 1 is at %x", device->list_head);
+    device->list_head->index = 1;
+printk(KERN_DEBUG "\nhere 2");
+    device->list_head->junk = "hello world\0";
+printk(KERN_DEBUG "\nhere 3");
+    device->list_head->next = kmalloc(sizeof (struct blob), GFP_KERNEL);
+printk(KERN_DEBUG "\nblob 2 is at %x", device->list_head->next);
+    device->list_head->next->index = 2;
+printk(KERN_DEBUG "\nhere 5");
+    device->list_head->next->junk = "123456789101112131415161718192021222324\0";
+printk(KERN_DEBUG "\nhere 6");
+    device->list_head->next->next = 0;
+printk(KERN_DEBUG "\nhere 7");
+    device->blob_count = 2;
+printk(KERN_DEBUG "\nhere 8");
+    device->current_blob = device->list_head->next;
+printk(KERN_DEBUG "\ncurrent_blob is pointing to %x", device->current_blob);
 
     //acquire mutex lock
     // TO DO
@@ -220,22 +243,33 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
         // TO DO
         return -EINVAL;
     }
-
+printk(KERN_DEBUG "\nhere 10");
     //check that there is a blob list allocated, and wait for one if there isn't
-    if (!device->list_head)
+    if (!device->list_head) {
+        //release lock
+        // TO DO
         //block (wait for data)
         // TO DO
-
+        //acquire lock
+        // TO DO
+    }
+printk(KERN_DEBUG "\nhere 11");
     //check that requested index is beyond the end of list, and wait if it is
-    if (requested_index > device->blob_count - 1)
+    if (requested_index > device->blob_count - 1) {
+        //release lock
+        // TO DO
         //block (wait for data at requested index)
         // TO DO
-
+        //acquire lock
+        // TO DO
+    }
+printk(KERN_DEBUG "\nhere 12");
     //traverse the list to the requested index
     current_index = device->current_blob->index;
+printk(KERN_DEBUG "\ncurrent_index = %d", current_index);
     if (requested_index < current_index) {
         blob = device->list_head;
-        current_index = 0;
+        current_index = 1;
     }
     else
         blob = device->current_blob;
@@ -244,7 +278,7 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
         current_index = blob->index;
     }
     device->current_blob = blob; //redundant if requested index == current index
-   
+printk(KERN_DEBUG "\nhere 13");
     /*
      * determine the amount of data to copy to the user. it will either be the
      * amount requested by the user if there is enough data in the junk array,
@@ -254,15 +288,15 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
     for (i = 0; blob->junk[i] != '\0' && i < count; ++i) {
         ++bytes_read;
     }
-
-    //copy the data to the user and check the return value for error
+printk(KERN_DEBUG "\nhere 14");
+    //copy the junk data to the buffer sent in by the user and check for error
     error = copy_to_user(data, blob->junk, bytes_read);
     if (error) {
         //release lock
         // TO DO
         return -EFAULT;
     }
-
+printk(KERN_DEBUG "\nhere 15");
     //release mutex lock
     // TO DO
 
