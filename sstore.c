@@ -289,6 +289,9 @@ int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int ui,
  * RELEASE
  */
 int sstore_release(struct inode * inode, struct file * filp) {
+    //DEBUG OUTPUT
+    printk(KERN_DEBUG "In sstore_release\n");
+
     return 0;
 }
 
