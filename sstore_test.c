@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <fcntl.h>
 
 struct readWriteBuffer {
     int index;
@@ -13,9 +14,9 @@ int main ()
     struct readWriteBuffer buf;
 
     //test open
-    sstore_device = open("/dev/sstore0", "r");
+    sstore_device = open("/dev/sstore0", O_RDONLY);
     if (sstore_device < 0)
-        printf("\nDevice failed to open.\n");
+        perror("open");
 
     //test read
 
@@ -27,6 +28,7 @@ int main ()
     //test close
     if (sstore_device == 0)
         close(sstore_device);
+    perror("close");
 
     return 0;
 }
