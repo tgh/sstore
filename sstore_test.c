@@ -27,8 +27,10 @@ int main ()
 
     //test close
     if (sstore_device == 0)
+    {
         close(sstore_device);
-    perror("close");
+        perror("close");
+    }
 
     return 0;
 }
