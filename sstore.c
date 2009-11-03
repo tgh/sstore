@@ -310,14 +310,14 @@ ssize_t sstore_write(struct file * filp, const char __user * buffer,
                                         size_t count, loff_t * file_position) {
     struct sstore * device = filp->private_data;
     struct blob * blob;         //used for traversing the blob list
-    struct previous_blob;       // "
+    struct blob * previous_blob;// "
     char * data = NULL;         //will point to the data inside the buffer
-    int requested_index = 0;    //grabbed from the buffer (see below)
+    int given_index = 0;        //grabbed from the buffer (see below)
     int size = 0;               //grabbed from the buffer (see below)
     int current_index = 0;      //the value of the current_blob pointer index
     int error = 0;              //used for detecting error return values
     int bytes_written = 0;      //the amount actually written
-    int i = 0;                  //for for loops
+
     /*
      * TO DO: DETAILED COMMENT NEEDED HERE FOR THE NEXT 3 LINES RE: USER STRUCT
      */
