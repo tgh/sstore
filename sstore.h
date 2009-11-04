@@ -50,8 +50,17 @@
 
 //----------------------------------------------------------------------------
 
+/*
+ * MISC. DEFINITIONS
+ */
 //the number of devices that can be associated with this driver
 const int SSTORE_DEVICE_COUNT = 2;
+/*
+ * this is an error number for ioctl to return when there is no blob to delete
+ * at the index given by the user.  300 is arbitrary, but it is known not to be
+ * used by errno.h in the C standard library.
+ */
+#define ENOBLOB 300
 
 //----------------------------------------------------------------------------
 
