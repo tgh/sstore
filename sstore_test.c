@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <sys/types.h>  //man page open says is needed, but compiles without it
 #include <sys/stat.h>   // "
 #include <unistd.h>     //man page read/write says needed, but compiles without
@@ -103,6 +104,9 @@ int main ()
         perror("read");
     buf.data[9] = '\0';
     printf("\namount read = %d, data read = %s\n", bytes_read, buf.data);
+
+
+    //test ioctl
 
 
     //test close

@@ -130,7 +130,7 @@ static int __init sstore_init(void) {
         sstore_dev_array[i].fd_count = 0;
         sstore_dev_array[i].blob_count = 0;
         sstore_dev_array[i].list_head = NULL;
-        sstore_dev_array[i].current_blob = NULL;
+        sstore_dev_array[i].seek_blob = NULL;
         sema_init(&sstore_dev_array[i].mutex, 1);
         cdev_init(&sstore_dev_array[i].cdev, &sstore_fops);
         sstore_dev_array[i].cdev.owner = THIS_MODULE;
@@ -233,7 +233,7 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
     device->list_head->next->junk = "123456789101112131415161718192021222324\0";
     device->list_head->next->next = NULL;
     device->blob_count = 2;
-    device->current_blob = device->list_head->next;
+    device->seek_blob = device->list_head->next;
 //END TEMPORARY CODE
 */
     //acquire mutex lock
@@ -267,18 +267,18 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
     }
 
     //traverse the list to the requested index
-    current_index = device->current_blob->index;
+    current_index = device->seek_blob->index;
     if (u_buf->index < current_index) {
         blob = device->list_head;
         current_index = 1;
     }
     else
-        blob = device->current_blob;
+        blob = device->seek_blob;
     while (u_buf->index != current_index) {
         blob = blob->next;
         current_index = blob->index;
     }
-    device->current_blob = blob; //redundant if requested index == current index
+    device->seek_blob = blob; //redundant if requested index == current index
 
     /*
      * determine the amount of data to copy to the user. it will either be the
@@ -379,12 +379,12 @@ printk(KERN_DEBUG "\nWRITE 2");
         blob->junk = NULL;
 printk(KERN_DEBUG "\nWRITE 3");
     } else {
-        current_index = device->current_blob->index;
+        current_index = device->seek_blob->index;
         if (u_buf->index < current_index) {
             blob = device->list_head;
             current_index = 1;
         } else
-            blob = device->current_blob;
+            blob = device->seek_blob;
 printk(KERN_DEBUG "\nWRITE 4");
         while (current_index != u_buf->index) {
             blob = blob->next;
@@ -403,7 +403,7 @@ printk(KERN_DEBUG "\nWRITE 5");
      * we are now at the blob at the given index. Set the device's current
      * blob pointer to the blob being written to.
      */
-    device->current_blob = blob;
+    device->seek_blob = blob;
 printk(KERN_DEBUG "\nWRITE 7");
     /*
      * allocate space for the data in the blob.  If the given amount to
@@ -416,14 +416,14 @@ printk(KERN_DEBUG "\nWRITE 7");
     if (blob->junk) {
         blob = kmalloc (sizeof (struct blob), GFP_KERNEL);
         blob->index = u_buf->index;
-        blob->next = device->current_blob->next;
+        blob->next = device->seek_blob->next;
         blob->junk = NULL;
 printk(KERN_DEBUG "\nWRITE 8");
         if (u_buf->index != 1) {
 printk(KERN_DEBUG "\nWRITE 9");
             previous_blob = device->list_head;
 printk(KERN_DEBUG "\nWRITE 10");
-            while (previous_blob->next != device->current_blob) {
+            while (previous_blob->next != device->seek_blob) {
 printk(KERN_DEBUG "\nWRITE 11");
                 previous_blob = previous_blob->next;
             }
@@ -433,13 +433,13 @@ printk(KERN_DEBUG "\nWRITE 13");
         } else
             device->list_head = blob;
 printk(KERN_DEBUG "\nWRITE 14");
-        device->current_blob->next = NULL;
+        device->seek_blob->next = NULL;
 printk(KERN_DEBUG "\nWRITE 15");
-        kfree(device->current_blob->junk);
+        kfree(device->seek_blob->junk);
 printk(KERN_DEBUG "\nWRITE 16");
-        kfree(device->current_blob);
+        kfree(device->seek_blob);
 printk(KERN_DEBUG "\nWRITE 17");
-        device->current_blob = blob;
+        device->seek_blob = blob;
     }
 printk(KERN_DEBUG "\nWRITE 18");
     blob->junk = kmalloc(u_buf->size + 1, GFP_KERNEL);
@@ -460,8 +460,35 @@ printk(KERN_DEBUG "\nWRITE 18");
 /*
  * IOCTL
  */
-int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int ui,
-        unsigned long ul) {
+int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int command,
+                                                        unsigned long arg) {
+    struct sstore * device = filp->private_data;
+    struct blob * current_blob;     //used for traversing blob list
+    struct blob * previous_blob;    // "
+
+    /*
+     * check validity of command sent in by user.
+     * Why am I returning -EINVAL instead of -ENOTTY?  Because I like things
+     * that make sense.  Sorry POSIX.
+     */
+	if (_IOC_TYPE(command) != SSTORE_IOCTL_MAGIC) return -EINVAL;
+	if (_IOC_NR(command) > SSTORE_IOCTL_MAX) return -EINVAL;
+
+    switch (command) {
+        case SSTORE_IOCTL_DELETE:
+            //acquire lock
+            // TO DO
+            
+
+        /*
+         * the only way this could be entered is if a command was removed from
+         * sstore.h and the subsequent commands were not updated, thus a gap
+         * in the command numbers.
+         */
+        default:
+            return -EINVAL;
+    }
+
     return 0;
 }
 
@@ -502,6 +529,11 @@ int sstore_release(struct inode * inode, struct file * filp) {
                 kfree(previous_blob);
                 previous_blob = current_blob;
             }
+            //cleanup pointers
+            current_blob = NULL;
+            previous_blob = NULL;
+            device->list_head = NULL;
+            device->seek_blob = NULL;
         }
     }
 
