@@ -47,10 +47,9 @@ int main ()
 
     //test ioctl (before data)
     ioctl_return = ioctl(sstore_device, SSTORE_IOCTL_DELETE, 1);
-    printf("\nioctl_return 0 = %d", ioctl_return);
-    if (ioctl_return == -ENOBLOB)
-        printf("\nThere is no blob to delete at that index.\n");
-
+    if (ioctl_return < 0)
+        perror("ioctl");
+    
 
     //test write with arbitrary values
     buf.index = 7;
@@ -122,29 +121,24 @@ int main ()
 
     //test ioctl
     ioctl_return = ioctl(sstore_device, SSTORE_IOCTL_DELETE, 1);
-    printf("\nioctl_return 1 = %d", ioctl_return);
-    if (ioctl_return == -ENOBLOB)
-        printf("\nThere is no blob to delete at that index.\n");
+    if (ioctl_return < 0)
+        perror("ioctl");
 
     ioctl_return = ioctl(sstore_device, SSTORE_IOCTL_DELETE, 7);
-    printf("\nioctl_return 2 = %d", ioctl_return);
-    if (ioctl_return == -ENOBLOB)
-        printf("\nThere is no blob to delete at that index.\n");
+    if (ioctl_return < 0)
+        perror("ioctl");
 
     ioctl_return = ioctl(sstore_device, SSTORE_IOCTL_DELETE, 6);
-    printf("\nioctl_return 3 = %d", ioctl_return);
-    if (ioctl_return == -ENOBLOB)
-        printf("\nThere is no blob to delete at that index.\n");
+    if (ioctl_return < 0)
+        perror("ioctl");
 
     ioctl_return = ioctl(sstore_device, SSTORE_IOCTL_DELETE, 2);
-    printf("\nioctl_return 4 = %d", ioctl_return);
-    if (ioctl_return == -ENOBLOB)
-        printf("\nThere is no blob to delete at that index.\n");
+    if (ioctl_return < 0)
+        perror("ioctl");
 
     ioctl_return = ioctl(sstore_device, 4643457, 1);
-    printf("\nioctl_return 5 = %d", ioctl_return);
-    if (ioctl_return == -ENOBLOB)
-        printf("\nThere is no blob to delete at that index.\n");
+    if (ioctl_return < 0)
+        perror("ioctl");
 
     //test close
     if (sstore_device == 0)
