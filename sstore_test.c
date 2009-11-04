@@ -31,6 +31,7 @@ int main ()
     bytes_read = read(sstore_device, &buf, buf.size);
     if (bytes_read < 0)
         perror("read");
+    buf.data[10] = '\0';
     printf("\namount read = %d, data read = %s\n", bytes_read, buf.data);
 
 /*
