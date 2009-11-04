@@ -240,7 +240,7 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
     }
 
     //check that requested index is beyond the end of list, and wait if it is
-    if (u_buf->index > device->blob_count - 1) {
+    if (u_buf->index > device->blob_count) {
         //release lock
         // TO DO
         //block (wait for data at requested index)
