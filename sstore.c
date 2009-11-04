@@ -16,7 +16,6 @@
 #include <linux/types.h>        /* for dev_t (represents device numbers),
                                  * ssize_t, size_t, loff_t types */
 #include <linux/kdev_t.h>       /* for MKDEV(), MAJOR(), and MINOR() macros */
-#include <linux/cdev.h>         /* for struct cdev */
 #include <linux/sched.h>        /* for current process info */
 #include <linux/uaccess.h>      /* for copy_to_user() and copy_from_user() */
 #include "sstore.h"             /* SSTORE_MAJOR, SSTORE_DEVICE_COUNT
@@ -129,9 +128,10 @@ static int __init sstore_init(void) {
     //initialize each device in the array
     for (i = 0; i < SSTORE_DEVICE_COUNT; ++i) {
         sstore_dev_array[i].fd_count = 0;
+        sstore_dev_array[i].blob_count = 0;
         sstore_dev_array[i].list_head = NULL;
         sstore_dev_array[i].current_blob = NULL;
-        sstore_dev_array[i].blob_count = 0;
+        sema_init(&sstore_dev_array[i].mutex, 1);
         cdev_init(&sstore_dev_array[i].cdev, &sstore_fops);
         sstore_dev_array[i].cdev.owner = THIS_MODULE;
         sstore_dev_array[i].cdev.ops = &sstore_fops;
