@@ -359,7 +359,7 @@ ssize_t sstore_write(struct file * filp, const char __user * buffer,
         // TO DO
         return -EINVAL;
     }
-printk(KERN_DEBUG "\nWRITE 1");
+
     /* 
      * traverse the list to the given index and allocate any blobs along the way
      * if need be
@@ -370,7 +370,6 @@ printk(KERN_DEBUG "\nWRITE 1");
         blob = device->list_head;
         ++current_index;
         ++device->blob_count;
-printk(KERN_DEBUG "\nWRITE 2");
         while (u_buf->index != current_index) {
             blob->index = current_index;
             blob->junk = NULL;
@@ -382,7 +381,6 @@ printk(KERN_DEBUG "\nWRITE 2");
         blob->index = current_index;
         blob->next = NULL;
         blob->junk = NULL;
-printk(KERN_DEBUG "\nWRITE 3");
     } else {
         current_index = device->seek_blob->index;
         if (u_buf->index < current_index) {
@@ -390,7 +388,6 @@ printk(KERN_DEBUG "\nWRITE 3");
             current_index = 1;
         } else
             blob = device->seek_blob;
-printk(KERN_DEBUG "\nWRITE 4");
         while (current_index != u_buf->index) {
             blob = blob->next;
             ++current_index;
@@ -403,13 +400,13 @@ printk(KERN_DEBUG "\nWRITE 4");
             }
         }
     }
-printk(KERN_DEBUG "\nWRITE 5");
+
     /*
      * we are now at the blob at the given index. Set the device's current
      * blob pointer to the blob being written to.
      */
     device->seek_blob = blob;
-printk(KERN_DEBUG "\nWRITE 7");
+
     /*
      * allocate space for the data in the blob.  If the given amount to
      * write is greater than the maximum size specified by the module
@@ -423,31 +420,21 @@ printk(KERN_DEBUG "\nWRITE 7");
         blob->index = u_buf->index;
         blob->next = device->seek_blob->next;
         blob->junk = NULL;
-printk(KERN_DEBUG "\nWRITE 8");
         if (u_buf->index != 1) {
-printk(KERN_DEBUG "\nWRITE 9");
             previous_blob = device->list_head;
-printk(KERN_DEBUG "\nWRITE 10");
             while (previous_blob->next != device->seek_blob) {
-printk(KERN_DEBUG "\nWRITE 11");
                 previous_blob = previous_blob->next;
             }
-printk(KERN_DEBUG "\nWRITE 12");
             previous_blob->next = blob;
-printk(KERN_DEBUG "\nWRITE 13");
         } else
             device->list_head = blob;
-printk(KERN_DEBUG "\nWRITE 14");
         device->seek_blob->next = NULL;
-printk(KERN_DEBUG "\nWRITE 15");
         kfree(device->seek_blob->junk);
-printk(KERN_DEBUG "\nWRITE 16");
         kfree(device->seek_blob);
-printk(KERN_DEBUG "\nWRITE 17");
         device->seek_blob = blob;
     }
-printk(KERN_DEBUG "\nWRITE 18");
     blob->junk = kmalloc(u_buf->size + 1, GFP_KERNEL);
+
     //copy the data from user to blob
     error = copy_from_user(blob->junk, u_buf->data, bytes_written);
     if (error) {
@@ -466,6 +453,8 @@ printk(KERN_DEBUG "\nWRITE 18");
  * IOCTL.
  *
  * The only command in ioctl is to delete a blob at an index specified by arg.
+ * When a blob does not exist at the valid index passed in by the user, -EINVAL
+ * is returned.  It would be nice to have a -ENOBLOB error defined, but oh well.
  */
 int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int command,
                                                         unsigned long arg) {
@@ -473,13 +462,17 @@ int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int command,
     struct blob * current_blob;     //used for traversing blob list
     struct blob * previous_blob;    // "
 
+
+    //DEBUG OUTPUT
+    printk(KERN_DEBUG "\nIn sstore ioctl()");
+
     /*
      * check validity of command sent in by user.
-     * Why am I returning -EINVAL instead of -ENOTTY?  Because I like things
-     * that make sense.  Sorry POSIX.
+     * -ENOTTY means "Inappropriate I/O control operation." (see "Linux Device
+     * Drivers" 3rd Ed. p.140)
      */
-	if (_IOC_TYPE(command) != SSTORE_IOCTL_MAGIC) return -EINVAL;
-	if (_IOC_NR(command) > SSTORE_IOCTL_MAX) return -EINVAL;
+	if (_IOC_TYPE(command) != SSTORE_IOCTL_MAGIC) return -ENOTTY;
+	if (_IOC_NR(command) > SSTORE_IOCTL_MAX) return -ENOTTY;
 
     switch (command) {
         case SSTORE_IOCTL_DELETE:
@@ -493,8 +486,9 @@ int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int command,
             if (!device->list_head) {
                 //release lock
                 // TO DO
-                return -ENOBLOB;
+                return -EINVAL;
             }
+
             //special case: blob to delete is the first one
             if (arg == 1) {
                 //set current_blob to the blob being deleted
@@ -518,7 +512,7 @@ int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int command,
                     if (!current_blob) {
                         //release lock
                         // TO DO
-                        return -ENOBLOB;
+                        return -EINVAL;
                     }
                 }
                 //traverse previous_blob pointer to the blob in front of current
@@ -533,6 +527,7 @@ int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int command,
                  */
                 previous_blob = previous_blob->next;
             }
+
             //clear first blob's next pointer (could already be NULL)
             current_blob->next = NULL;
             //delete the blob (free kmalloced memory)
@@ -563,6 +558,7 @@ int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int command,
             return -EINVAL;
     }
 
+    //return success
     return 0;
 }
 
@@ -581,7 +577,7 @@ int sstore_release(struct inode * inode, struct file * filp) {
     struct blob * previous_blob;
 
     //DEBUG OUTPUT
-    printk(KERN_DEBUG "In sstore_release\n");
+    printk(KERN_DEBUG "\nIn sstore_release");
 
     //identify which device is being closed
     device = container_of(inode->i_cdev, struct sstore, cdev);
