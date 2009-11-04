@@ -2,15 +2,25 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>  //man page open says is needed, but compiles without it
+#include <sys/stat.h>   // "
+#include <unistd.h>     //man page read/write says needed, but compiles without
 
+
+//this struct acts as a buffer to be sent in to read/write calls
 struct readWriteBuffer {
-    int index;
-    int size;
-    char * data;
+    int index;      //index into the blob list to read from/write to
+    int size;       //amount of data (bytes) to read/write
+    char * data;    //the actual buffer that holds the data
 };
 
 int main ()
 {
+/*
+    printf("\n\n");
+    printf("**TEST program for TYLER HAYES' SSTORE device driver.\n");
+    printf("**Use at your own risk.\n\n");
+*/
     int sstore_device;          //file descriptor for the device
     struct readWriteBuffer buf; //buffer to be passed in through read and write
     int bytes_read = 0;
