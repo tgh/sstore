@@ -195,6 +195,11 @@ loff_t sstore_llseek(struct file * filp, loff_t offset, int i) {
 
 /*
  * READ.  The loff_t * file_position and size_t count arguments are ignored.
+ *
+ * This function will return data to the user even if there wasn't enough to
+ * satisfy the amount requested.  In that case, all of the data in the blob
+ * will be copied back to user.  If there is no data at all to be read, no copy
+ * to user is done, and 0 is returned (for number of bytes read).
  */
 ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
                                                     loff_t * file_position) {
@@ -458,7 +463,9 @@ printk(KERN_DEBUG "\nWRITE 18");
 //---------------------------------------------------------------------------
 
 /*
- * IOCTL
+ * IOCTL.
+ *
+ * The only command in ioctl is to delete a blob at an index specified by arg.
  */
 int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int command,
                                                         unsigned long arg) {
@@ -543,7 +550,7 @@ int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int command,
 //---------------------------------------------------------------------------
 
 /*
- * RELEASE
+ * RELEASE.
  */
 int sstore_release(struct inode * inode, struct file * filp) {
     struct sstore * device;
@@ -594,7 +601,7 @@ int sstore_release(struct inode * inode, struct file * filp) {
 //---------------------------------------------------------------------------
 
 /*
- * EXIT
+ * EXIT.
  */
 static void sstore_cleanup_and_exit(void) {
     int i = 0;
