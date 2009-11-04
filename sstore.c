@@ -200,12 +200,15 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
                                                     loff_t * file_position) {
     struct sstore * device = filp->private_data;
     struct blob * blob;         //used for traversing the blob list
-    struct user_buffer * u_buf; //buffer gets copied into here
+    struct user_buffer * u_buf; //char __user * buffer gets copied into here
     int current_index = 0;      //the value of the current_blob pointer index
     int error = 0;              //used for detecting error return values
     int bytes_read = 0;         //the amount actually read (sent back to user)
     int i = 0;                  //for for loops
 
+
+    //DEBUG OUTPUT
+    printk(KERN_DEBUG "\nIn sstore read()");
 
     //allocate space for the user's buffered content to be placed
     u_buf = kmalloc(sizeof (struct user_buffer), GFP_KERNEL);
@@ -220,7 +223,7 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
     printk(KERN_DEBUG "\nrequested index in read = %d", u_buf->index);
     //DEBUG OUTPUT
     printk(KERN_DEBUG "\nrequested size of data in read = %d", u_buf->size);
-
+/*
 //TEMPORARY DATA FILLING IN ORDER TO TEST READ
     device->list_head = kmalloc(sizeof (struct blob), GFP_KERNEL);
     device->list_head->index = 1;
@@ -232,7 +235,7 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
     device->blob_count = 2;
     device->current_blob = device->list_head->next;
 //END TEMPORARY CODE
-
+*/
     //acquire mutex lock
     // TO DO
     
@@ -290,7 +293,7 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
     }
 
     //copy the junk data to the buffer sent in by the user and check for error
-    error = copy_to_user(u_buf->data, blob->junk, sizeof (struct user_buffer));
+    error = copy_to_user(u_buf->data, blob->junk, bytes_read);
     if (error) {
         //release lock
         // TO DO
@@ -319,33 +322,39 @@ ssize_t sstore_write(struct file * filp, const char __user * buffer,
     struct sstore * device = filp->private_data;
     struct blob * blob;         //used for traversing the blob list
     struct blob * previous_blob;// "
-    char * data = NULL;         //will point to the data inside the buffer
-    int given_index = 0;        //grabbed from the buffer (see below)
-    int size = 0;               //grabbed from the buffer (see below)
+    struct user_buffer * u_buf; //char __user * buffer get copied into here
     int current_index = 0;      //the value of the current_blob pointer index
     int error = 0;              //used for detecting error return values
     int bytes_written = 0;      //the amount actually written
 
-    /*
-     * TO DO: DETAILED COMMENT NEEDED HERE FOR THE NEXT 3 LINES RE: USER STRUCT
-     */
-    data = buffer + 8;
-    given_index = *buffer;
+
     //DEBUG OUTPUT
-    printk(KERN_DEBUG "\nrequested index in write = %d", given_index);
-    size = *(buffer + 4);
+    printk(KERN_DEBUG "\nIn sstore write()");
+
+    //allocate space for the user's buffered content to be placed
+    u_buf = kmalloc(sizeof (struct user_buffer), GFP_KERNEL);
+    //copy contents of user buffer (a struct of the same form) into u_buf struct
+    error = copy_from_user(u_buf, buffer, sizeof (struct user_buffer));
+    if (error) {
+        //DEBUG OUTPUT
+        printk(KERN_DEBUG "\nError in copying buffer from user in write()\n");
+        return -EFAULT;
+    }
     //DEBUG OUTPUT
-    printk(KERN_DEBUG "\nrequested size of data in write = %d", size);
+    printk(KERN_DEBUG "\nrequested index in write = %d", u_buf->index);
+    //DEBUG OUTPUT
+    printk(KERN_DEBUG "\nrequested size of data in write = %d", u_buf->size);
+
     //acquire lock
     // TO DO
 
     //return inavlid argument error if given index is beyond maximum blobs
-    if (given_index > max_blobs || given_index <= 0  || size <= 0) {
+    if (u_buf->index > max_blobs || u_buf->index <= 0  || u_buf->size <= 0) {
         //release lock
         // TO DO
         return -EINVAL;
     }
-
+printk(KERN_DEBUG "\nWRITE 1");
     /* 
      * traverse the list to the given index and allocate any blobs along the way
      * if need be
@@ -356,7 +365,8 @@ ssize_t sstore_write(struct file * filp, const char __user * buffer,
         blob = device->list_head;
         ++current_index;
         ++device->blob_count;
-        while (given_index != current_index) {
+printk(KERN_DEBUG "\nWRITE 2");
+        while (u_buf->index != current_index) {
             blob->index = current_index;
             blob->junk = NULL;
             blob->next = kmalloc(sizeof (struct blob), GFP_KERNEL);
@@ -366,14 +376,17 @@ ssize_t sstore_write(struct file * filp, const char __user * buffer,
         }
         blob->index = current_index;
         blob->next = NULL;
+        blob->junk = NULL;
+printk(KERN_DEBUG "\nWRITE 3");
     } else {
         current_index = device->current_blob->index;
-        if (given_index < current_index) {
+        if (u_buf->index < current_index) {
             blob = device->list_head;
             current_index = 1;
         } else
             blob = device->current_blob;
-        while (current_index != given_index) {
+printk(KERN_DEBUG "\nWRITE 4");
+        while (current_index != u_buf->index) {
             blob = blob->next;
             ++current_index;
             if (!blob) {
@@ -385,42 +398,53 @@ ssize_t sstore_write(struct file * filp, const char __user * buffer,
             }
         }
     }
-
+printk(KERN_DEBUG "\nWRITE 5");
     /*
      * we are now at the blob at the given index. Set the device's current
      * blob pointer to the blob being written to.
      */
     device->current_blob = blob;
-
+printk(KERN_DEBUG "\nWRITE 7");
     /*
      * allocate space for the data in the blob.  If the given amount to
      * write is greater than the maximum size specified by the module
      * parameter max_size, then max_size of data is written.
      */
-    if (size > max_size)
-        size = max_size;
-    bytes_written = size;
+    if (u_buf->size > max_size)
+        u_buf->size = max_size;
+    bytes_written = u_buf->size;
     if (blob->junk) {
         blob = kmalloc (sizeof (struct blob), GFP_KERNEL);
-        blob->index = given_index;
+        blob->index = u_buf->index;
         blob->next = device->current_blob->next;
         blob->junk = NULL;
-        if (given_index != 1) {
+printk(KERN_DEBUG "\nWRITE 8");
+        if (u_buf->index != 1) {
+printk(KERN_DEBUG "\nWRITE 9");
             previous_blob = device->list_head;
+printk(KERN_DEBUG "\nWRITE 10");
             while (previous_blob->next != device->current_blob) {
+printk(KERN_DEBUG "\nWRITE 11");
                 previous_blob = previous_blob->next;
             }
+printk(KERN_DEBUG "\nWRITE 12");
             previous_blob->next = blob;
+printk(KERN_DEBUG "\nWRITE 13");
         } else
             device->list_head = blob;
+printk(KERN_DEBUG "\nWRITE 14");
         device->current_blob->next = NULL;
+printk(KERN_DEBUG "\nWRITE 15");
         kfree(device->current_blob->junk);
+printk(KERN_DEBUG "\nWRITE 16");
         kfree(device->current_blob);
+printk(KERN_DEBUG "\nWRITE 17");
         device->current_blob = blob;
     }
-    blob->junk = kmalloc(size + 1, GFP_KERNEL);
+printk(KERN_DEBUG "\nWRITE 18");
+    blob->junk = kmalloc(u_buf->size + 1, GFP_KERNEL);
     //copy the data from user to blob
-    error = copy_from_user(blob->junk, data, bytes_written);
+    error = copy_from_user(blob->junk, u_buf->data, bytes_written);
     if (error) {
         //release lock
         // TO DO
