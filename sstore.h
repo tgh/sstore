@@ -45,3 +45,12 @@ struct sstore {
     struct blob * current_blob;
     struct cdev cdev;
 };
+
+//----------------------------------------------------------------------------
+
+//this structure mirrors the readWriteBuffer struct in the test program
+struct user_buffer {
+    int index;
+    int size;
+    char * data;
+};
