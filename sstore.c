@@ -200,23 +200,29 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
                                                     loff_t * file_position) {
     struct sstore * device = filp->private_data;
     struct blob * blob;         //used for traversing the blob list
-    char __user * data = NULL;  //will point to the data inside the buffer
-    int requested_index = 0;    //grabbed from the buffer (see below)
-    int size = 0;               //grabbed from the buffer (see below)
+    struct user_buffer * u_buf; //buffer gets copied into here
     int current_index = 0;      //the value of the current_blob pointer index
     int error = 0;              //used for detecting error return values
     int bytes_read = 0;         //the amount actually read (sent back to user)
     int i = 0;                  //for for loops
-    /*
-     * TO DO: DETAILED COMMENT NEEDED HERE FOR THE NEXT 3 LINES RE: USER STRUCT
-     */
-    data = buffer + 8;
-    requested_index = *buffer;
+
     //DEBUG OUTPUT
-    printk(KERN_DEBUG "\nrequested index in read = %d\n", requested_index);
-    size = *(buffer + 4);
+    printk(KERN_DEBUG "\nthe address of user read/write buffer: %x\n", buffer);
+    //allocate space for the user's buffered content to be placed
+    u_buf = kmalloc(sizeof (struct user_buffer), GFP_KERNEL);
+    //copy contents of user buffer (a struct of the same form) into u_buf struct
+    error = copy_from_user(u_buf, buffer, sizeof (struct user_buffer));
+    if (error) {
+        //DEBUG OUTPUT
+        printk(KERN_DEBUG "\nError in copying buffer from user in read()\n");
+        return -EFAULT;
+    }
     //DEBUG OUTPUT
-    printk(KERN_DEBUG "\nrequested size of data in read = %d\n", size);
+    printk(KERN_DEBUG "\nthe address of kernel read/write buffer: %x\n", u_buf);
+    //DEBUG OUTPUT
+    printk(KERN_DEBUG "\nrequested index in read = %d\n", u_buf->index);
+    //DEBUG OUTPUT
+    printk(KERN_DEBUG "\nrequested size of data in read = %d\n", u_buf->size);
 
 //TEMPORARY DATA FILLING IN ORDER TO TEST READ
     device->list_head = kmalloc(sizeof (struct blob), GFP_KERNEL);
@@ -234,7 +240,7 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
     // TO DO
     
     //return inavlid argument error if requested index goes beyond maximum blobs
-    if (requested_index > max_blobs || requested_index <= 0) {
+    if (u_buf->index > max_blobs || u_buf->index <= 0) {
         //release mutex lock (do we need it for max_blobs???)
         // TO DO
         return -EINVAL;
@@ -251,7 +257,7 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
     }
 
     //check that requested index is beyond the end of list, and wait if it is
-    if (requested_index > device->blob_count - 1) {
+    if (u_buf->index > device->blob_count - 1) {
         //release lock
         // TO DO
         //block (wait for data at requested index)
@@ -262,13 +268,13 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
 
     //traverse the list to the requested index
     current_index = device->current_blob->index;
-    if (requested_index < current_index) {
+    if (u_buf->index < current_index) {
         blob = device->list_head;
         current_index = 1;
     }
     else
         blob = device->current_blob;
-    while (requested_index != current_index) {
+    while (u_buf->index != current_index) {
         blob = blob->next;
         current_index = blob->index;
     }
@@ -282,12 +288,12 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
      */
     if (!blob->junk)
         return 0;
-    for (i = 0; blob->junk[i] != '\0' && i < size; ++i) {
+    for (i = 0; blob->junk[i] != '\0' && i < u_buf->size; ++i) {
         ++bytes_read;
     }
 
     //copy the junk data to the buffer sent in by the user and check for error
-    error = copy_to_user(data, blob->junk, bytes_read);
+    error = copy_to_user(u_buf->data, blob->junk, sizeof (struct user_buffer));
     if (error) {
         //release lock
         // TO DO
