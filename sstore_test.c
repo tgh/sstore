@@ -6,6 +6,11 @@
 #include <sys/types.h>  //man page open says is needed, but compiles without it
 #include <sys/stat.h>   // "
 #include <unistd.h>     //man page read/write says needed, but compiles without
+#include </home/tgh/src/linux-source-2.6.28/include/asm-generic/ioctl.h>
+
+
+#define SSTORE_IOCTL_MAGIC 0xFF
+#define SSTORE_IOCTL_DELETE _IO(SSTORE_IOCTL_MAGIC, 0)
 
 
 //this struct acts as a buffer to be sent in to read/write calls
@@ -26,16 +31,25 @@ int main ()
     struct readWriteBuffer buf; //buffer to be passed in through read and write
     int bytes_read = 0;
     int bytes_written = 0;
+    int ioctl_return = 0;
 
     //initialize buf
     buf.index = 0;
     buf.size = 0;
     buf.data = NULL;
 
+
     //test open
     sstore_device = open("/dev/sstore0", O_RDWR);
     if (sstore_device < 0)
         perror("open");
+
+
+    //test ioctl (before data)
+    ioctl_return = ioctl(sstore_device, SSTORE_IOCTL_DELETE, 1);
+    printf("\nioctl_return 0 = %d", ioctl_return);
+    if (ioctl_return == -ENOBLOB)
+        printf("\nThere is no blob to delete at that index.\n");
 
 
     //test write with arbitrary values
@@ -107,7 +121,30 @@ int main ()
 
 
     //test ioctl
+    ioctl_return = ioctl(sstore_device, SSTORE_IOCTL_DELETE, 1);
+    printf("\nioctl_return 1 = %d", ioctl_return);
+    if (ioctl_return == -ENOBLOB)
+        printf("\nThere is no blob to delete at that index.\n");
 
+    ioctl_return = ioctl(sstore_device, SSTORE_IOCTL_DELETE, 7);
+    printf("\nioctl_return 2 = %d", ioctl_return);
+    if (ioctl_return == -ENOBLOB)
+        printf("\nThere is no blob to delete at that index.\n");
+
+    ioctl_return = ioctl(sstore_device, SSTORE_IOCTL_DELETE, 6);
+    printf("\nioctl_return 3 = %d", ioctl_return);
+    if (ioctl_return == -ENOBLOB)
+        printf("\nThere is no blob to delete at that index.\n");
+
+    ioctl_return = ioctl(sstore_device, SSTORE_IOCTL_DELETE, 2);
+    printf("\nioctl_return 4 = %d", ioctl_return);
+    if (ioctl_return == -ENOBLOB)
+        printf("\nThere is no blob to delete at that index.\n");
+
+    ioctl_return = ioctl(sstore_device, 4643457, 1);
+    printf("\nioctl_return 5 = %d", ioctl_return);
+    if (ioctl_return == -ENOBLOB)
+        printf("\nThere is no blob to delete at that index.\n");
 
     //test close
     if (sstore_device == 0)
