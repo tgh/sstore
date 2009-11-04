@@ -501,6 +501,11 @@ int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int command,
                 current_blob = device->list_head;
                 //set head pointer to second blob in list
                 device->list_head = current_blob->next;
+                /*
+                 * set previous pointer to the start of the rest of the list in
+                 * order to update the index values of the remaining blobs.
+                 */
+                previous_blob = device->list_head;
             } else {
                 if (arg < device->seek_blob->index)
                     current_blob = device->list_head;
@@ -522,6 +527,11 @@ int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int command,
                     previous_blob = previous_blob->next;
                 //set previous blob's next pointer to blob in front of current
                 previous_blob->next = current_blob->next;
+                /*
+                 * set previous pointer to the start of the rest of the list in
+                 * order to update the index values of the remaining blobs.
+                 */
+                previous_blob = previous_blob->next;
             }
             //clear first blob's next pointer (could already be NULL)
             current_blob->next = NULL;
@@ -529,6 +539,15 @@ int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int command,
             if (current_blob->junk)
                 kfree(current_blob->junk);
             kfree(current_blob);
+
+            //update the index numbers of the remaining blobs in the list
+            while (previous_blob) {
+                --previous_blob->index;
+                previous_blob = previous_blob->next;
+            }
+
+            //update the blob count
+            --device->blob_count;
 
             //release lock
             // TO DO
