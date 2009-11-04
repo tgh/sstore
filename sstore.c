@@ -476,10 +476,58 @@ int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int command,
 
     switch (command) {
         case SSTORE_IOCTL_DELETE:
+            if (arg > max_blobs || arg <= 0)
+                return -EINVAL;
+
             //acquire lock
             // TO DO
-            
 
+            //return no blob error if there is no list
+            if (!device->list_head) {
+                //release lock
+                // TO DO
+                return -ENOBLOB;
+            }
+            //special case: blob to delete is the first one
+            if (arg == 1) {
+                //set current_blob to the blob being deleted
+                current_blob = device->list_head;
+                //set head pointer to second blob in list
+                device->list_head = current_blob->next;
+            } else {
+                if (arg < device->seek_blob->index)
+                    current_blob = device->list_head;
+                else
+                    current_blob = device->seek_blob;
+                //traverse the list until the blob at given index (arg) is found
+                while (current_blob->index != arg) {
+                    current_blob = current_blob->next;
+                    //return no blob error if end of list has been reached
+                    if (!current_blob) {
+                        //release lock
+                        // TO DO
+                        return -ENOBLOB;
+                    }
+                }
+                //traverse previous_blob pointer to the blob in front of current
+                previous_blob = device->list_head;
+                while (previous_blob->next != current_blob)
+                    previous_blob = previous_blob->next;
+                //set previous blob's next pointer to blob in front of current
+                previous_blob->next = current_blob->next;
+            }
+            //clear first blob's next pointer (could already be NULL)
+            current_blob->next = NULL;
+            //delete the blob (free kmalloced memory)
+            if (current_blob->junk)
+                kfree(current_blob->junk);
+            kfree(current_blob);
+
+            //release lock
+            // TO DO
+
+            break;
+            
         /*
          * the only way this could be entered is if a command was removed from
          * sstore.h and the subsequent commands were not updated, thus a gap
