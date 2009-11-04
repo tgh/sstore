@@ -4,7 +4,8 @@
  * sstore.h 
  */
 
-#include <linux/cdev.h> /* for the cdev struct */
+#include <linux/cdev.h>         /* for the cdev struct */
+#include <linux/semaphore.h>    /* for a mutual exclusion semaphore */
 
 //----------------------------------------------------------------------------
 
@@ -42,7 +43,8 @@ struct sstore {
     unsigned int fd_count;
     unsigned int blob_count;
     struct blob * list_head;
-    struct blob * current_blob;
+    struct blob * current_blob; //a pointer to the last used blob
+    struct semaphore mutex;     //semaphore for mutal exclusion
     struct cdev cdev;
 };
 
