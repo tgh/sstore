@@ -61,7 +61,6 @@ module_param(sstore_minor, uint, S_IRUGO);
  */
 struct file_operations sstore_fops = {
     .owner = THIS_MODULE,
-    .llseek = sstore_llseek,
     .read = sstore_read,
     .write = sstore_write,
     .ioctl = sstore_ioctl,
@@ -185,15 +184,6 @@ int sstore_open(struct inode * inode, struct file * filp) {
 //---------------------------------------------------------------------------
 
 /*
- * LLSEEK
- */
-loff_t sstore_llseek(struct file * filp, loff_t offset, int i) {
-    return offset;
-}
-
-//---------------------------------------------------------------------------
-
-/*
  * READ.  The loff_t * file_position and size_t count arguments are ignored.
  *
  * This function will return data to the user even if there wasn't enough to
@@ -228,19 +218,7 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
     printk(KERN_DEBUG "\nrequested index in read = %d", u_buf->index);
     //DEBUG OUTPUT
     printk(KERN_DEBUG "\nrequested size of data in read = %d", u_buf->size);
-/*
-//TEMPORARY DATA FILLING IN ORDER TO TEST READ
-    device->list_head = kmalloc(sizeof (struct blob), GFP_KERNEL);
-    device->list_head->index = 1;
-    device->list_head->junk = "hello world\0";
-    device->list_head->next = kmalloc(sizeof (struct blob), GFP_KERNEL);
-    device->list_head->next->index = 2;
-    device->list_head->next->junk = "123456789101112131415161718192021222324\0";
-    device->list_head->next->next = NULL;
-    device->blob_count = 2;
-    device->seek_blob = device->list_head->next;
-//END TEMPORARY CODE
-*/
+
     //acquire mutex lock
     // TO DO
     
