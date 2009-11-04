@@ -49,8 +49,8 @@ struct sstore * sstore_dev_array;
  * Module Parameters -- S_IRUGO is a permissions mask that means this parameter
  * can be read by the world, but cannot be changed.
  */
-unsigned int max_blobs = 1;
-unsigned int max_size = 1024;
+unsigned int max_blobs = 10;
+unsigned int max_size = 1048;
 module_param(max_blobs, uint, S_IRUGO);
 module_param(max_size, uint, S_IRUGO);
 module_param(sstore_major, uint, S_IRUGO);
@@ -206,8 +206,7 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
     int bytes_read = 0;         //the amount actually read (sent back to user)
     int i = 0;                  //for for loops
 
-    //DEBUG OUTPUT
-    printk(KERN_DEBUG "\nthe address of user read/write buffer: %x\n", buffer);
+
     //allocate space for the user's buffered content to be placed
     u_buf = kmalloc(sizeof (struct user_buffer), GFP_KERNEL);
     //copy contents of user buffer (a struct of the same form) into u_buf struct
@@ -218,11 +217,9 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
         return -EFAULT;
     }
     //DEBUG OUTPUT
-    printk(KERN_DEBUG "\nthe address of kernel read/write buffer: %x\n", u_buf);
+    printk(KERN_DEBUG "\nrequested index in read = %d", u_buf->index);
     //DEBUG OUTPUT
-    printk(KERN_DEBUG "\nrequested index in read = %d\n", u_buf->index);
-    //DEBUG OUTPUT
-    printk(KERN_DEBUG "\nrequested size of data in read = %d\n", u_buf->size);
+    printk(KERN_DEBUG "\nrequested size of data in read = %d", u_buf->size);
 
 //TEMPORARY DATA FILLING IN ORDER TO TEST READ
     device->list_head = kmalloc(sizeof (struct blob), GFP_KERNEL);
@@ -335,10 +332,10 @@ ssize_t sstore_write(struct file * filp, const char __user * buffer,
     data = buffer + 8;
     given_index = *buffer;
     //DEBUG OUTPUT
-    printk(KERN_DEBUG "\nrequested index in write = %d\n", given_index);
+    printk(KERN_DEBUG "\nrequested index in write = %d", given_index);
     size = *(buffer + 4);
     //DEBUG OUTPUT
-    printk(KERN_DEBUG "\nrequested size of data in write = %d\n", size);
+    printk(KERN_DEBUG "\nrequested size of data in write = %d", size);
     //acquire lock
     // TO DO
 
