@@ -1,0 +1,40 @@
+[80409.623239] In sstore_init()<7>
+[80409.623246] max_blobs = 10, max_size = 1048<7>
+[80449.115890] In sstore_open()<7>
+[80449.115899] open count in open = 1<7>
+[80449.116092] In sstore write()<7>
+[80449.116097] requested index in write = 7<7>
+[80449.116100] requested size of data in write = 39<7>
+[80449.116219] In sstore write()<7>
+[80449.116223] requested index in write = 5<7>
+[80449.116227] requested size of data in write = 15<7>
+[80449.116308] In sstore write()<7>
+[80449.116312] requested index in write = 2<7>
+[80449.116316] requested size of data in write = 10<7>
+[80449.116398] In sstore read()<7>
+[80449.116402] requested index in read = 7<7>
+[80449.116406] requested size of data in read = 38<7>
+[80449.116495] In sstore write()<7>
+[80449.116500] requested index in write = 4<7>
+[80449.116503] requested size of data in write = 21<7>
+[80449.116584] In sstore read()<7>
+[80449.116588] requested index in read = 1<7>
+[80449.116592] requested size of data in read = 38<7>
+[80449.116597] "test1" in read() is sleeping...<7>
+[80488.613155] In sstore_open()<7>
+[80488.613162] open count in open = 2<7>
+[80488.613256] In sstore write()<7>
+[80488.613259] requested index in write = 3<7>
+[80488.613262] requested size of data in write = 19<7>
+[80488.613329] In sstore write()<7>
+[80488.613334] requested index in write = 20<7>
+[80488.613338] requested size of data in write = 12<7>
+[80488.613470] In sstore write()<7>
+[80488.613473] requested index in write = 1<7>
+[80488.613476] requested size of data in write = 12<7>
+[80488.613519] In sstore ioctl()<7>
+[80488.613656] In sstore ioctl()<7>
+[80488.613824] In sstore_release<7>
+[80488.613830] open count in release = 1<7>
+[80488.613977] In sstore_release<7>
+[80488.613982] open count in release = 0
