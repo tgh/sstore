@@ -28,9 +28,9 @@
  */
 static int sstore_init(void);
 int sstore_open(struct inode * i_node, struct file * file);
-int sstore_proc_data(char * page, char ** start, off_t offset, int count,
+int sstore_proc_read_data(char * page, char ** start, off_t offset, int count,
         int * eof, void * data);
-int sstore_proc_stats(char * page, char ** start, off_t offset, int count,
+int sstore_proc_read_stats(char * page, char ** start, off_t offset, int count,
         int * eof, void * data);
 ssize_t sstore_read(struct file * file, char __user * user, size_t size,
         loff_t * offset);
@@ -82,6 +82,7 @@ static int __init sstore_init(void) {
     int i = 0; //your standard for-loop variable
     int error = 0;  //to catch any errors returned from certain function calls
     dev_t device_num = 0; //the device number (holds major and minor number)
+    struct proc_dir_entry * sstore; //used for creating a /proc directory
 
     //DEBUG OUTPUT
     printk(KERN_DEBUG "\nIn sstore_init()");
@@ -159,8 +160,9 @@ static int __init sstore_init(void) {
      * the device's blob list.  The stats file gives statistics of the device,
      * such as a count of open device file descriptors.
      */
-    create_proc_read_entry("sstore_data", 0, NULL, sstore_proc_data, NULL);
-    create_proc_read_entry("sstore_stats", 0, NULL, sstore_proc_stats, NULL);
+    sstore = proc_mkdir("sstore", NULL);
+    create_proc_read_entry("data", 0, sstore, sstore_proc_read_data, NULL);
+    create_proc_read_entry("stats", 0, sstore, sstore_proc_read_stats, NULL);
 
     //successful return
     return 0;
@@ -211,10 +213,64 @@ int sstore_open(struct inode * inode, struct file * filp) {
 //---------------------------------------------------------------------------
 
 /*
- * PROC READ.
+ * PROC: sstore/data file.
  *
- * This 
+ * This function outputs the contents of the device's blob list.  The char **
+ * start and void * data arguments are ignored.
  */
+int sstore_proc_read_data(char * page, char ** start, off_t offset, int count,
+        int * eof, void * data) {
+    struct sstore * device; //used to traverse the device array
+    struct blob * blob;     //used to traverse the blob list
+    int seek = 0;           //keeps track of where to write in page
+    int limit = count - 100;//add a pillow of 100 bytes just in case
+    int i = 0;
+
+    //print the contents of each device
+    for (i = 0; i < SSTORE_DEVICE_COUNT && seek < limit; ++i) {
+        device = &sstore_dev_array[i];
+        //acquire mutex lock on device
+        if (down_interruptible(&device->mutex))
+            return -ERESTARTSYS;
+        //set temporary blob pointer to head of blob list in the device
+        blob = device->list_head;
+        //output "no data" message if device doesn't have a list allocated
+        if (!blob)
+            seek += sprintf(page + seek, "\nSstore Device %i has no data.", i);
+        //output data throughout the list
+        while (blob) {
+            seek += sprintf(page + seek, "\nSstore Device No. = %i", i);
+            seek += sprintf(page + seek, " - Blob No. = %i", blob->index);
+            seek += sprintf(page + seek, " - Data = ");
+            if (blob->junk)
+                seek += sprintf(page + seek, "\"%s\"", blob->junk);
+            else
+                seek += sprintf(page + seek, "NO DATA");
+            blob = blob->next;
+        }
+        //release mutex lock
+        up(&device->mutex);
+    }
+
+    //set end-of-file flag
+    *eof = 1;
+
+    return seek;
+}
+
+//---------------------------------------------------------------------------
+
+/*
+ * PROC: sstore/stats file.
+ *
+ * This function outputs statistics of the device, such as a count of open
+ * device file descriptors.
+ */
+int sstore_proc_read_stats(char * page, char ** start, off_t offset, int count,
+        int * eof, void * data) {
+
+    return 0;
+}
 
 //---------------------------------------------------------------------------
 
