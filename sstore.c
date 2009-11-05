@@ -717,7 +717,7 @@ int sstore_release(struct inode * inode, struct file * filp) {
         //decrement the number of open file descriptors
         --device->fd_count;
         //DEBUG OUTPUT
-        printk(KERN_DEBUG "\nopen count in release = %d\n", device->fd_count);
+        printk(KERN_DEBUG "\nopen count in release = %d", device->fd_count);
         //free the blob list when this is the last close
         if (device->fd_count == 0) {
             current_blob = device->list_head;
