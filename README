@@ -50,6 +50,10 @@ tests just do basic operations with arbitrary data.  If time permitted I would
 have created a interactive program that allowed the user to make reads, writes,
 and deletions at runtime.
 
+NOTE: when testing concurrency, the return from wait_event_interruptible in read
+always leads to returning -ERESTARTSYS.  I don't know why this is, and I don't
+think that's a problem with my code...  You can see in the typescript.
+
 
 API/OPERATIONS
 --------------
