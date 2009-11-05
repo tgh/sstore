@@ -49,7 +49,7 @@ unsigned int sstore_major = SSTORE_MAJOR;
 unsigned int sstore_minor = SSTORE_MINOR;
 //for an array of sstore devices
 struct sstore * sstore_dev_array;
-//used for creating a /proc directory (used in init() and release())
+//used for creating a /proc directory (used in init() and cleanup_and_exit())
 struct proc_dir_entry * sstore;
 
 /*
@@ -272,8 +272,37 @@ int sstore_proc_read_data(char * page, char ** start, off_t offset, int count,
  */
 int sstore_proc_read_stats(char * page, char ** start, off_t offset, int count,
         int * eof, void * data) {
+    struct sstore * device; //used to traverse the device array
+    int seek = 0;           //keeps track of where to write in page
+    int limit = count - 100;//add a pillow of 100 bytes just in case
+    int i = 0;
 
-    return 0;
+    //print the stats of each device
+    for (i = 0; i < SSTORE_DEVICE_COUNT && seek < limit; ++i) {
+        device = &sstore_dev_array[i];
+        //acquire mutex lock on device
+        if (down_interruptible(&device->mutex))
+            return -ERESTARTSYS;
+        //output number of open file descriptors for device
+        seek += sprintf(page + seek, "\nSstore Device %i: ", i);
+        seek += sprintf(page + seek, "%i open store(s) - ", device->fd_count);
+        //output number of blobs in the device's blob list
+        seek += sprintf(page + seek, "%i blobs - ", device->blob_count);
+        //output the index of the blob the seek_blob pointer is pointing to
+        if (device->seek_blob)
+            seek += sprintf(page + seek, "seek pointer is at index %i",
+                                                    device->seek_blob->index);
+        else
+            seek += sprintf(page + seek, "seek pointer is NULL");
+
+        //release mutex lock
+        up(&device->mutex);
+    }
+
+    //set end-of-file flag
+    *eof = 1;
+
+    return seek;
 }
 
 //---------------------------------------------------------------------------
