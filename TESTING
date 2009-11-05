@@ -11,4 +11,5 @@ Both throw in a couple ioctl delete calls as well as some erroneous calls,
 like writing to a blob index greater than the max blob parameter, or deleting
 a non-existent blob.
 
-See typescript for the output.
+See typescript for the output, as well as dmesg.txt for the kernel debug output
+during execution.
