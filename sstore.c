@@ -203,8 +203,9 @@ int sstore_open(struct inode * inode, struct file * filp) {
  *
  * This function will return data to the user even if there wasn't enough to
  * satisfy the amount requested.  In that case, all of the data in the blob
- * will be copied back to user.  If there is no data at all to be read, no copy
- * to user is done, and 0 is returned (for number of bytes read).
+ * will be copied back to user.  If there is no data at all to be read, or if
+ * there is no blob at the desired index, then it will wait (sleep) until data
+ * is available there.
  */
 ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
                                                     loff_t * file_position) {
