@@ -1,0 +1,84 @@
+Script started on Thu 05 Nov 2009 11:05:35 AM PST
+root@tgh:/home/tgh/sstore# cat /proc/sstore/data
+
+Sstore Device 0 has no data.
+
+Sstore Device 1 has no data.
+root@tgh:/home/tgh/sstore# cat /proc/sstore/stats
+
+Sstore Device 0: 0 open store(s) - 0 blobs - seek pointer is NULL
+
+Sstore Device 1: 0 open store(s) - 0 blobs - seek pointer is NULL
+root@tgh:/home/tgh/sstore# ./test1 &
+[1] 31906
+root@tgh:/home/tgh/sstore# 
+Opening device.
+Writing to index 7.
+	Amount written = 39
+
+Writing to index 5.
+	Amount written = 15
+
+Writing to index 2.
+	Amount written = 10
+
+Reading from index 7.
+	Amount read = 38, data read = A string of random characters this be..
+
+Writing to index 4.
+	Amount written = 21
+
+
+root@tgh:/home/tgh/sstore# cat /proc/sstore/data
+
+Sstore Device No. = 0 - Blob No. = 1 - Data = NO DATA
+Sstore Device No. = 0 - Blob No. = 2 - Data = "Password:"
+Sstore Device No. = 0 - Blob No. = 3 - Data = NO DATA
+Sstore Device No. = 0 - Blob No. = 4 - Data = "Linux Device Drivers"
+Sstore Device No. = 0 - Blob No. = 5 - Data = "Another string"
+Sstore Device No. = 0 - Blob No. = 6 - Data = NO DATA
+Sstore Device No. = 0 - Blob No. = 7 - Data = "A string of random characters thi
+s be."
+
+Sstore Device 1 has no data.
+root@tgh:/home/tgh/sstore# cat /proc/sstore/stats
+
+Sstore Device 0: 1 open store(s) - 7 blobs - seek pointer is at index 1
+
+Sstore Device 1: 0 open store(s) - 0 blobs - seek pointer is NULL
+root@tgh:/home/tgh/sstore# ./test2
+
+Opening device.
+Writing to index 3.
+	Amount written = 19
+
+write: Invalid argument
+Attempting to write to blob 20 (index too high).
+	Amount written = -1
+
+Writing to index 1.
+	Amount written = 12
+
+ioctl: Invalid argument
+read: Unknown error 512
+Reading from index 1.
+amount read = -1, data read = .
+
+Attempting to delete blob at index 9 (desn't exist).
+Closing the device.Deleting blob at index 3.
+Closing the device.[1]+  Done                    ./test1
+root@tgh:/home/tgh/sstore# 
+root@tgh:/home/tgh/sstore# cat /proc/sstore/data
+
+Sstore Device 0 has no data.
+
+Sstore Device 1 has no data.
+root@tgh:/home/tgh/sstore# cat /proc/sstore/stats
+
+Sstore Device 0: 0 open store(s) - 6 blobs - seek pointer is NULL
+
+Sstore Device 1: 0 open store(s) - 0 blobs - seek pointer is NULL
+root@tgh:/home/tgh/sstore# exit
+exit
+
+Script done on Thu 05 Nov 2009 11:07:12 AM PST
