@@ -44,9 +44,13 @@ static void sstore_cleanup_and_exit(void);
 /*
  * Global variables
  */
+//major and minor numbers
 unsigned int sstore_major = SSTORE_MAJOR;
 unsigned int sstore_minor = SSTORE_MINOR;
+//for an array of sstore devices
 struct sstore * sstore_dev_array;
+//used for creating a /proc directory (used in init() and release())
+struct proc_dir_entry * sstore;
 
 /*
  * Module Parameters -- S_IRUGO is a permissions mask that means this parameter
@@ -82,7 +86,7 @@ static int __init sstore_init(void) {
     int i = 0; //your standard for-loop variable
     int error = 0;  //to catch any errors returned from certain function calls
     dev_t device_num = 0; //the device number (holds major and minor number)
-    struct proc_dir_entry * sstore; //used for creating a /proc directory
+
 
     //DEBUG OUTPUT
     printk(KERN_DEBUG "\nIn sstore_init()");
@@ -694,7 +698,7 @@ int sstore_release(struct inode * inode, struct file * filp) {
     }
 
     //release mutex lock
-    up(&device->mutex);   
+    up(&device->mutex);
 
     return 0;
 }
@@ -718,6 +722,11 @@ static void sstore_cleanup_and_exit(void) {
         }
         kfree(sstore_dev_array);
     }
+
+    //remove /proc files
+    remove_proc_entry("data", sstore);
+    remove_proc_entry("stats", sstore);
+    remove_proc_entry("sstore", NULL);
 
     /* 
      * Unregister devices (there is guaranteed to be registered devices here 
