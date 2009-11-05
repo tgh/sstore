@@ -1,0 +1,14 @@
+Tyler Hayes
+cs572
+11/5/09
+Assignment 1 - Testing document
+
+In order to test the driver, I wrote two small programs called test_first and 
+test_second.  The first writes data to the device, along with a read thrown in.
+It then calls a read that blocks.  test_second is then run which eventually
+writes to the position that test_first is waiting for.  It wakes and continues.
+Both throw in a couple ioctl delete calls as well as some erroneous calls,
+like writing to a blob index greater than the max blob parameter, or deleting
+a non-existent blob.
+
+See typescript for the output.
