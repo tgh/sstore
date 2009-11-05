@@ -199,7 +199,7 @@ int sstore_open(struct inode * inode, struct file * filp) {
     if (device) {
         ++device->fd_count;
         //DEBUG OUTPUT
-        printk(KERN_DEBUG "\nopen count in open = %d\n", device->fd_count);
+        printk(KERN_DEBUG "\nopen count in open = %d", device->fd_count);
     }
     /*
      * store this sstore struct in the private_data field so that calls to read,
