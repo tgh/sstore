@@ -74,6 +74,48 @@ int main ()
     printContinuePrompt();
 
 
+    //write to the device using an index of 5
+    printf("\nWriting to index 5.");
+    buf.index = 5;
+    buf.size = 15;
+    if (buf.data)
+        free(buf.data);
+    buf.data = (char *) malloc(16);
+    if (!buf.data) {
+        printf("\nError in malloc: test_first.c\n");
+        return 0;
+    }
+    strncpy(buf.data, "Another string\0", 16);
+    bytes_written = write(sstore_device, &buf, sizeof (struct readWriteBuffer));
+    if (bytes_written < 0)
+        perror("write");
+    printf("\n\tAmount written = %d\n", bytes_written);
+
+
+    printContinuePrompt();
+
+
+    //write to the device using an index of 2
+    printf("\nWriting to index 2.");
+    buf.index = 2;
+    buf.size = 10;
+    if (buf.data)
+        free(buf.data);
+    buf.data = (char *) malloc(11);
+    if (!buf.data) {
+        printf("\nError in malloc: test_first.c\n");
+        return 0;
+    }
+    strncpy(buf.data, "Password:\0", 11);
+    bytes_written = write(sstore_device, &buf, sizeof (struct readWriteBuffer));
+    if (bytes_written < 0)
+        perror("write");
+    printf("\n\tAmount written = %d\n", bytes_written);
+
+
+    printContinuePrompt();
+
+
     //read from the device using an index of 7
     printf("\nReading from index 7.");
     buf.index = 7;
@@ -90,6 +132,27 @@ int main ()
         perror("read");
     buf.data[38] = '\0';
     printf("\n\tAmount read = %d, data read = %s.\n", bytes_read, buf.data);
+
+
+    printContinuePrompt();
+
+
+    //write to the device using an index of 4
+    printf("\nWriting to index 4.");
+    buf.index = 4;
+    buf.size = 21;
+    if (buf.data)
+        free(buf.data);
+    buf.data = (char *) malloc(22);
+    if (!buf.data) {
+        printf("\nError in malloc: test_first.c\n");
+        return 0;
+    }
+    strncpy(buf.data, "Linux Device Drivers\0", 22);
+    bytes_written = write(sstore_device, &buf, sizeof (struct readWriteBuffer));
+    if (bytes_written < 0)
+        perror("write");
+    printf("\n\tAmount written = %d\n", bytes_written);
 
 
     printContinuePrompt();
