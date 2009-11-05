@@ -174,6 +174,10 @@ int sstore_open(struct inode * inode, struct file * filp) {
     //identify which device is being opened
     device = container_of(inode->i_cdev, struct sstore, cdev);
 
+    //acquire mutex lock
+    if (down_interruptible(&device->mutex))
+        return -ERESTARTSYS;
+
     if (device) {
         ++device->fd_count;
         //DEBUG OUTPUT
@@ -185,6 +189,9 @@ int sstore_open(struct inode * inode, struct file * filp) {
      * access the data being stored in the sstore struct's blob list. 
      */
     filp->private_data = device;
+
+    //release mutex lock
+    up(&device->mutex);
 
     return 0;
 }
@@ -226,16 +233,14 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
     printk(KERN_DEBUG "\nrequested index in read = %d", u_buf->index);
     //DEBUG OUTPUT
     printk(KERN_DEBUG "\nrequested size of data in read = %d", u_buf->size);
-
-    //acquire mutex lock
-    // TO DO
     
     //return inavlid argument error if requested index goes beyond maximum blobs
-    if (u_buf->index > max_blobs || u_buf->index <= 0) {
-        //release mutex lock (do we need it for max_blobs???)
-        // TO DO
+    if (u_buf->index > max_blobs || u_buf->index <= 0)
         return -EINVAL;
-    }
+
+    //acquire mutex lock
+    if (down_interruptible(&device->mutex))
+        return -ERESTARTSYS;
 
     /*
      * check that requested index is beyond the end of list, and wait if it is.
@@ -243,21 +248,18 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
      * list_head is NULL).
      */
     while (u_buf->index > device->blob_count) {
-        //release lock
-        // TO DO
+        //release mutex lock
+        up(&device->mutex);
 
         //DEBUG OUTPUT
         printk(KERN_DEBUG "\n\"%s\" in read() is sleeping...", current->comm);
         //block (wait for blob at requested index)
         if (wait_event_interruptible(device->wait_queue, 
                                      (u_buf->index <= device->blob_count)));
-            /* 
-             * let the upper layers of kernel handle when an interrupt occurs during
-             * wait_event. (see "Linux Device Drivers" 3rd. Ed. pg.154)
-             */
             return -ERESTARTSYS;
-        //acquire lock
-        // TO DO
+        //acquire mutex lock
+        if (down_interruptible(&device->mutex))
+            return -ERESTARTSYS;
     }
 
     //traverse the list to the requested index
@@ -282,20 +284,17 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
      * something is there.
      */
     while (!blob->junk) {
-        //release lock
-        // TO DO
+        //release mutex lock
+        up(&device->mutex);
 
         //DEBUG OUTPUT
         printk(KERN_DEBUG "\n\"%s\" in read() is sleeping...", current->comm);
         //block (wait for data on the requested blob)
         if (wait_event_interruptible(device->wait_queue, (blob->junk)));
-            /* 
-             * let the upper layers of kernel handle when an interrupt occurs during
-             * wait_event. (see "Linux Device Drivers" 3rd. Ed. pg.154)
-             */
             return -ERESTARTSYS;
-        //acquire lock
-        // TO DO
+        //acquire mutex lock
+        if (down_interruptible(&device->mutex))
+            return -ERESTARTSYS;
     }
     for (i = 0; blob->junk[i] != '\0' && i < u_buf->size; ++i) {
         ++bytes_read;
@@ -304,13 +303,13 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
     //copy the junk data to the buffer sent in by the user and check for error
     error = copy_to_user(u_buf->data, blob->junk, bytes_read);
     if (error) {
-        //release lock
-        // TO DO
+        //release mutex lock
+        up (&device->mutex);
         return -EFAULT;
     }
 
     //release mutex lock
-    // TO DO
+    up (&device->mutex);
 
     //tell the user how many bytes were read
     return bytes_read;
@@ -354,13 +353,14 @@ ssize_t sstore_write(struct file * filp, const char __user * buffer,
     //DEBUG OUTPUT
     printk(KERN_DEBUG "\nrequested size of data in write = %d", u_buf->size);
 
-    //acquire lock
-    // TO DO
+    //acquire mutex lock
+    if (down_interruptible(&device->mutex))
+        return -ERESTARTSYS;
 
     //return inavlid argument error if given index is beyond maximum blobs
     if (u_buf->index > max_blobs || u_buf->index <= 0  || u_buf->size <= 0) {
-        //release lock
-        // TO DO
+        //release mutex lock
+        up(&device->mutex);
         return -EINVAL;
     }
 
@@ -442,8 +442,8 @@ ssize_t sstore_write(struct file * filp, const char __user * buffer,
     //copy the data from user to blob
     error = copy_from_user(blob->junk, u_buf->data, bytes_written);
     if (error) {
-        //release lock
-        // TO DO
+        //release mutex lock
+        up(&device->mutex);
         return -EFAULT;
     }
 
@@ -486,13 +486,14 @@ int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int command,
             if (arg > max_blobs || arg <= 0)
                 return -EINVAL;
 
-            //acquire lock
-            // TO DO
+            //acquire mutex lock
+            if (down_interruptible(&device->mutex))
+                return -ERESTARTSYS;
 
             //return no blob error if there is no list
             if (!device->list_head) {
-                //release lock
-                // TO DO
+                //release mutex lock
+                up(&device->mutex);
                 return -EINVAL;
             }
 
@@ -517,8 +518,8 @@ int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int command,
                     current_blob = current_blob->next;
                     //return no blob error if end of list has been reached
                     if (!current_blob) {
-                        //release lock
-                        // TO DO
+                        //release mutex lock
+                        up(&device->mutex);
                         return -EINVAL;
                     }
                 }
@@ -551,8 +552,8 @@ int sstore_ioctl(struct inode * inode, struct file * filp, unsigned int command,
             //update the blob count
             --device->blob_count;
 
-            //release lock
-            // TO DO
+            //release mutex lock
+            up(&device->mutex);
 
             break;
             
@@ -589,8 +590,9 @@ int sstore_release(struct inode * inode, struct file * filp) {
     //identify which device is being closed
     device = container_of(inode->i_cdev, struct sstore, cdev);
 
-    //aqcuire lock
-    //TO DO
+    //acquire mutex lock
+    if (down_interruptible(&device->mutex))
+        return -ERESTARTSYS;
 
     if (device->fd_count) {
         //decrement the number of open file descriptors
@@ -614,8 +616,8 @@ int sstore_release(struct inode * inode, struct file * filp) {
         }
     }
 
-    //release lock
-    //TO DO    
+    //release mutex lock
+    up(&device->mutex);   
 
     return 0;
 }
