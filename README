@@ -12,6 +12,20 @@ array of chars to hold arbitrary data, and a next blob pointer.  I should have
 implemented it as a doubly linked list, making deletion and seeking easier, but
 too late now.
 
+The comments are intentionally verbose for two reasons.  One, it helps me to
+learn and remember what is going on, and two, I like to make comments directed
+at individuals like me who are new to the scene and trying to understand this
+mess.
+
+Also, I did not use goto's.  If you can do it without them, why use them?
+More if's won't make the kernel more sloppy than it already is in my opinion.
+I should have made some local functions in the driver to make it a bit more
+readable and less messy during the list traversal sections of code.
+
+The book says to include some asm/ header files, but the compiler barked at me
+saying these files didn't exist.  I changed them to linux/ and it worked fine.
+Hmm...
+
 
 USING THE DRIVER
 ----------------
