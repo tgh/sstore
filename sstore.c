@@ -18,6 +18,7 @@
 #include <linux/kdev_t.h>       /* for MKDEV(), MAJOR(), and MINOR() macros */
 #include <linux/sched.h>        /* for current process info */
 #include <linux/uaccess.h>      /* for copy_to_user() and copy_from_user() */
+#include <linux/proc_fs.h>      /* for use of the /proc file system */
 #include "sstore.h"             /* SSTORE_MAJOR, SSTORE_DEVICE_COUNT
                                    struct sstore, struct blob */
 
@@ -27,7 +28,10 @@
  */
 static int sstore_init(void);
 int sstore_open(struct inode * i_node, struct file * file);
-loff_t sstore_llseek(struct file * file, loff_t offset, int i);
+int sstore_proc_data(char * page, char ** start, off_t offset, int count,
+        int * eof, void * data);
+int sstore_proc_stats(char * page, char ** start, off_t offset, int count,
+        int * eof, void * data);
 ssize_t sstore_read(struct file * file, char __user * user, size_t size,
         loff_t * offset);
 ssize_t sstore_write(struct file * file, const char __user * user,
@@ -150,6 +154,14 @@ static int __init sstore_init(void) {
         }
     }
 
+    /*
+     * create /proc files.  The data file keeps a record of the data stored in
+     * the device's blob list.  The stats file gives statistics of the device,
+     * such as a count of open device file descriptors.
+     */
+    create_proc_read_entry("sstore_data", 0, NULL, sstore_proc_data, NULL);
+    create_proc_read_entry("sstore_stats", 0, NULL, sstore_proc_stats, NULL);
+
     //successful return
     return 0;
 }
@@ -195,6 +207,14 @@ int sstore_open(struct inode * inode, struct file * filp) {
 
     return 0;
 }
+
+//---------------------------------------------------------------------------
+
+/*
+ * PROC READ.
+ *
+ * This 
+ */
 
 //---------------------------------------------------------------------------
 
