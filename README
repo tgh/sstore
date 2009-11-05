@@ -42,6 +42,13 @@ API/OPERATIONS
 This driver supports reads and writes (of course), as well as one ioctl command
 for deleting a blob by index.
 
+For read and write, the driver expects the incoming buffer to be an address for
+a struct of the following layout:
+
+int (for index)
+int (for size of data)
+char * (for data transfer buffer)
+
 During a read, if a blob doesn't exist at the given index (and the index is
 valid), or there is no data inside the blob (data pointer is NULL), then the
 process/thread blocks and waits for data to appear there.
