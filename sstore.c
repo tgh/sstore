@@ -433,7 +433,8 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
  * This function will allocate blobs if it needs to in order to get to the
  * given index (as long as the index is not beyond max_blobs of course).  If
  * there is data already in the blob at the given index, that blob is replaced
- * by a new blob with the data to be written, and the previous blob is freed. 
+ * by a new blob with the data to be written, and the previous blob is freed.
+ * NOTE: it is assumed that the data being written is delimited by '\0'. 
  */
 ssize_t sstore_write(struct file * filp, const char __user * buffer,
                                         size_t count, loff_t * file_position) {
