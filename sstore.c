@@ -250,8 +250,11 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
         printk(KERN_DEBUG "\n\"%s\" in read() is sleeping...", current->comm);
         //block (wait for blob at requested index)
         if (wait_event_interruptible(device->wait_queue, 
-                                     (u_buf->index <= device->blob_count));
-            //let the upper layers of kernel handle when wait_event_int fails
+                                     (u_buf->index <= device->blob_count)));
+            /* 
+             * let the upper layers of kernel handle when an interrupt occurs during
+             * wait_event. (see "Linux Device Drivers" 3rd. Ed. pg.154)
+             */
             return -ERESTARTSYS;
         //acquire lock
         // TO DO
@@ -285,8 +288,11 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
         //DEBUG OUTPUT
         printk(KERN_DEBUG "\n\"%s\" in read() is sleeping...", current->comm);
         //block (wait for data on the requested blob)
-        if (wait_event_interruptible(device->wait_queue, (blob->junk));
-            //let the upper layers of kernel handle when wait_event_int fails
+        if (wait_event_interruptible(device->wait_queue, (blob->junk)));
+            /* 
+             * let the upper layers of kernel handle when an interrupt occurs during
+             * wait_event. (see "Linux Device Drivers" 3rd. Ed. pg.154)
+             */
             return -ERESTARTSYS;
         //acquire lock
         // TO DO
@@ -440,6 +446,9 @@ ssize_t sstore_write(struct file * filp, const char __user * buffer,
         // TO DO
         return -EFAULT;
     }
+
+    //notify sleeping readers that something has been written to the blob list
+    wake_up_interruptible(&device->wait_queue);
 
     //return the number of bytes written to the user
     return bytes_written;
