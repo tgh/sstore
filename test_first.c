@@ -56,15 +56,15 @@ int main ()
     //write to the device using an index of 7
     printf("\nWriting to index 7.");
     buf.index = 7;
-    buf.size = 38;
+    buf.size = 39;
     if (buf.data)
         free(buf.data);
-    buf.data = (char *) malloc(39);
+    buf.data = (char *) malloc(40);
     if (!buf.data) {
         printf("\nError in malloc: test_first.c\n");
         return 0;
     }
-    strncpy(buf.data, "A string of random characters this be.", 39);
+    strncpy(buf.data, "A string of random characters this be.\0", 40);
     bytes_written = write(sstore_device, &buf, sizeof (struct readWriteBuffer));
     if (bytes_written < 0)
         perror("write");
@@ -105,7 +105,7 @@ int main ()
     if (!buf.data) {
         printf("\nError in malloc: test_first.c\n");
         return 0;
-    }   
+    }
     bytes_read = read(sstore_device, &buf, sizeof (struct readWriteBuffer));
     if (bytes_read < 0)
         perror("read");
