@@ -237,22 +237,22 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
         return -EINVAL;
     }
 
-    //check that there is a blob list allocated, and wait for one if there isn't
-    if (!device->list_head) {
+    /*
+     * check that requested index is beyond the end of list, and wait if it is.
+     * This also takes care if the case where the blob list is empty (device->
+     * list_head is NULL).
+     */
+    while (u_buf->index > device->blob_count) {
         //release lock
         // TO DO
-        //block (wait for data)
-        // TO DO
-        //acquire lock
-        // TO DO
-    }
 
-    //check that requested index is beyond the end of list, and wait if it is
-    if (u_buf->index > device->blob_count) {
-        //release lock
-        // TO DO
-        //block (wait for data at requested index)
-        // TO DO
+        //DEBUG OUTPUT
+        printk(KERN_DEBUG "\n\"%s\" in read() is sleeping...", current->comm);
+        //block (wait for blob at requested index)
+        if (wait_event_interruptible(device->wait_queue, 
+                                     (u_buf->index <= device->blob_count));
+            //let the upper layers of kernel handle when wait_event_int fails
+            return -ERESTARTSYS;
         //acquire lock
         // TO DO
     }
@@ -275,10 +275,22 @@ ssize_t sstore_read(struct file * filp, char __user * buffer, size_t count,
      * determine the amount of data to copy to the user. it will either be the
      * amount requested by the user if there is enough data in the junk array,
      * or it will be whatever is in the junk array if the requested amount is
-     * too big.
+     * too big.  If there is nothing there (junk pointer is NULL), wait until
+     * something is there.
      */
-    if (!blob->junk)
-        return 0;
+    while (!blob->junk) {
+        //release lock
+        // TO DO
+
+        //DEBUG OUTPUT
+        printk(KERN_DEBUG "\n\"%s\" in read() is sleeping...", current->comm);
+        //block (wait for data on the requested blob)
+        if (wait_event_interruptible(device->wait_queue, (blob->junk));
+            //let the upper layers of kernel handle when wait_event_int fails
+            return -ERESTARTSYS;
+        //acquire lock
+        // TO DO
+    }
     for (i = 0; blob->junk[i] != '\0' && i < u_buf->size; ++i) {
         ++bytes_read;
     }
