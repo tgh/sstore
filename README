@@ -84,6 +84,7 @@ variables is critical and is kept under the mutex lock.
 To use ioctl, use must include the sstore header file for the command.  It is
 SSTORE_IOCTL_DELETE.  When there is no blob at the given index to delete, a
 -EINVAL is returned.  An errno of -ENOBLOB would be better...
+Ioctl delete does not update the seek blob pointer, only read and write do that.
 
 
 /proc FILES
