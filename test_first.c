@@ -105,9 +105,9 @@ int main ()
         perror("read");
     buf.data[9] = '\0';
     printf("\namount read = %d, data read = %s.\n", bytes_read, buf.data);
-*/
-    printContinuePrompt();
 
+    printContinuePrompt();
+*/
     //delete the blob in the device at index 3
     printf("\nDeleting blob at index 3.");
     ioctl_return = ioctl(sstore_device, SSTORE_IOCTL_DELETE, 3);
@@ -126,15 +126,18 @@ int main ()
     return 0;
 }
 
-
+//user must enter 'c' to continue on
 void printContinuePrompt() {
-    char user_input;
+    char user_input[2];
+    char ch;
 
     printf("\n\nYou can now check /proc files (from another process).");
     do {
         printf("\n Press 'c' to continue. >");
-        scanf(" %c", &user_input);
-        if (user_input != 'c');
+        fgets(user_input, 2, stdin);
+        if (user_input[0] != 'c')
             printf("\nTry again.");
-    }while (user_input != 'c');
+        //clear input buffer
+        while ((ch = getchar()) != '\n' && ch != EOF);
+    }while (user_input[0] != 'c');
 }
