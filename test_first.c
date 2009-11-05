@@ -1,3 +1,11 @@
+/*
+ * Tyler Hayes - sstore device driver test program 1 of 2.
+ *
+ * There are two in order to test concurrency.  There are breaks in between
+ * operations so that you can check /proc/sstore/data and /proc/sstore/stats
+ * from another terminal if you want to.
+ */
+
 #include <stdio.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -12,6 +20,7 @@
 #define SSTORE_IOCTL_MAGIC 0xFF
 #define SSTORE_IOCTL_DELETE _IO(SSTORE_IOCTL_MAGIC, 0)
 
+void printContinuePrompt();
 
 //this struct acts as a buffer to be sent in to read/write calls
 struct readWriteBuffer {
@@ -22,16 +31,12 @@ struct readWriteBuffer {
 
 int main ()
 {
-/*
-    printf("\n\n");
-    printf("**TEST program for TYLER HAYES' SSTORE device driver.\n");
-    printf("**Use at your own risk.\n\n");
-*/
     int sstore_device;          //file descriptor for the device
     struct readWriteBuffer buf; //buffer to be passed in through read and write
     int bytes_read = 0;
     int bytes_written = 0;
     int ioctl_return = 0;
+    char user_input[3];         //used to catch user's input
 
     //initialize buf
     buf.index = 0;
@@ -39,19 +44,16 @@ int main ()
     buf.data = NULL;
 
 
-    //test open
+    //open the device
+    printf("\nOpening device.");
     sstore_device = open("/dev/sstore0", O_RDWR);
     if (sstore_device < 0)
         perror("open");
-
-
-    //test ioctl (before data)
-    ioctl_return = ioctl(sstore_device, SSTORE_IOCTL_DELETE, 1);
-    if (ioctl_return < 0)
-        perror("ioctl");
     
+    printContinuePrompt();
 
-    //test write with arbitrary values
+    //write to the device using an index of 7
+    printf("\nWriting to index 7.");
     buf.index = 7;
     buf.size = 38;
     if (buf.data)
@@ -65,10 +67,12 @@ int main ()
     bytes_written = write(sstore_device, &buf, sizeof (struct readWriteBuffer));
     if (bytes_written < 0)
         perror("write");
-    printf("\namount written = %d\n", bytes_written);
+    printf("\n\tAmount written = %d\n", bytes_written);
 
+    printContinuePrompt();
 
-    //test read with arbitrary values
+    //read from the device using an index of 7
+    printf("\nReading from index 7.");
     buf.index = 7;
     buf.size = 38;
     if (buf.data)
@@ -82,27 +86,12 @@ int main ()
     if (bytes_read < 0)
         perror("read");
     buf.data[38] = '\0';
-    printf("\namount read = %d, data read = %s\n", bytes_read, buf.data);
+    printf("\n\tAmount read = %d, data read = %s.\n", bytes_read, buf.data);
 
+    printContinuePrompt();
 
-    //test write with arbitrary values
-    buf.index = 1;
-    buf.size = 10;
-    if (buf.data)
-        free(buf.data);
-    buf.data = (char *) malloc(11);
-    if (!buf.data) {
-        printf("\nError in malloc: sstore_test.c\n");
-        return 0;
-    }
-    strncpy(buf.data, "abcdefghi\0", 10);
-    bytes_written = write(sstore_device, &buf, sizeof (struct readWriteBuffer));
-    if (bytes_written < 0)
-        perror("write");
-    printf("\namount written = %d\n", bytes_written);
-
-
-    //test read with arbitrary values
+    //read from the device using an index of 1
+    printf("\nReading from index 1.");
     buf.index = 1;
     buf.size = 38;
     if (buf.data)
@@ -116,36 +105,35 @@ int main ()
     if (bytes_read < 0)
         perror("read");
     buf.data[9] = '\0';
-    printf("\namount read = %d, data read = %s\n", bytes_read, buf.data);
+    printf("\namount read = %d, data read = %s.\n", bytes_read, buf.data);
 
+    printContinuePrompt();
 
-    //test ioctl
-    ioctl_return = ioctl(sstore_device, SSTORE_IOCTL_DELETE, 1);
+    //delete the blob in the device at index 3
+    printf("\nDeleting blob at index 3.");
+    ioctl_return = ioctl(sstore_device, SSTORE_IOCTL_DELETE, 3);
     if (ioctl_return < 0)
         perror("ioctl");
 
-    ioctl_return = ioctl(sstore_device, SSTORE_IOCTL_DELETE, 7);
-    if (ioctl_return < 0)
-        perror("ioctl");
+    printContinuePrompt();
 
-    ioctl_return = ioctl(sstore_device, SSTORE_IOCTL_DELETE, 6);
-    if (ioctl_return < 0)
-        perror("ioctl");
-
-    ioctl_return = ioctl(sstore_device, SSTORE_IOCTL_DELETE, 2);
-    if (ioctl_return < 0)
-        perror("ioctl");
-
-    ioctl_return = ioctl(sstore_device, 4643457, 1);
-    if (ioctl_return < 0)
-        perror("ioctl");
-
-    //test close
+    //close the device
+    printf("\nClosing the device.");
     if (sstore_device == 0)
-    {
         close(sstore_device);
-        perror("close");
-    }
+
+    printContinuePrompt();
 
     return 0;
+}
+
+
+void printContinuePrompt() {
+    printf("\n\nYou can now check /proc files (from another process).");
+    do {
+        printf("\n Press 'c' to continue. >");
+        fgets(user_input, 2, stdin);
+        if (user_input[0] != 'c' && user_input[1] != '\n');
+            printf("\nTry again.");
+    }while (user_input[0] != 'c' && user_input[1] != '\n');
 }
