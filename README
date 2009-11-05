@@ -1,0 +1,73 @@
+Tyler Hayes
+cs572
+11/5/09
+Assignment 1 - Sstore Device Driver
+
+
+OVERVIEW
+--------
+The sstore device is a storage device that holds a linear linked list of blobs.
+Each blob contains an integer representing it's index, a dynamically allocated
+array of chars to hold arbitrary data, and a next blob pointer.  I should have
+implemented it as a doubly linked list, making deletion and seeking easier, but
+too late now.
+
+
+USING THE DRIVER
+----------------
+To compile the driver, use the Makefile by running (as root):
+
+$ make -C [path of kernel source tree root] M=`pwd` modules
+
+Then, run the sstore_load script (as root).  You can now use your own program
+to use the sstore device, or run the test_first and test_second programs.  There
+is no Makefile for these, but all you need to do is run
+
+$ gcc -o test1 test_first.c
+$ gcc -o test2 test_second.c
+
+There are two in order to test concurrency.  By the names, you can guess that
+you should run test_first before test_second, in order to test concurrency.
+test_first will block on a read, and test_second will do a write that wakes the
+first up and let's it continue.  Each test also breaks in between each operation
+by waiting for the user to enter 'c' before continuing.  That way the user can
+use another process to read the /proc files (see below) if (s)he so wishes.  The
+tests just do basic operations with arbitrary data.  If time permitted I would
+have created a interactive program that allowed the user to make reads, writes,
+and deletions at runtime.
+
+
+API/OPERATIONS
+--------------
+This driver supports reads and writes (of course), as well as one ioctl command
+for deleting a blob by index.
+
+During a read, if a blob doesn't exist at the given index (and the index is
+valid), or there is no data inside the blob (data pointer is NULL), then the
+process/thread blocks and waits for data to appear there.
+
+The write routine will allocate empty blobs if the given index to write to is
+beyond the end of the list (but less than the maximum blobs allowed, of course).
+If, on the other hand, a blob is there, and data has already been stored there,
+then the previous data is freed, and new space is kmalloced accordingly for the
+new data being written.
+
+When a write is successful, those readers waiting on the wait queue will be
+awakened, in which case they recheck the condition they were waiting on.
+
+The sstore structure that represents the device contains an open file count, a
+blob count, a wait queue, a blob list, a blob pointer acting as a seek pointer
+in the list, a mutex lock, and a cdev structure.  Any code referencing these
+variables is critical and is kept under the mutex lock.
+
+To use ioctl, use must include the sstore header file for the command.  It is
+SSTORE_IOCTL_DELETE.  When there is no blob at the given index to delete, a
+-EINVAL is returned.  An errno of -ENOBLOB would be better...
+
+
+/proc FILES
+-----------
+This device initializes two /proc files: sstore/data, and sstore/stats.  data
+will spit out the data contents of the blobs in all open devices.  stats will
+report the open file count, blob count, and the index of where the blob seek
+pointer is in the list.
