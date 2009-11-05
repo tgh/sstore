@@ -7,6 +7,7 @@
 #include <linux/cdev.h>         /* for the cdev struct */
 #include <linux/semaphore.h>    /* for a mutual exclusion semaphore */
 #include <linux/ioctl.h>        /* for ioctl macros */
+#include <linux/wait.h>         /* for a wait queue */
 
 //----------------------------------------------------------------------------
 
@@ -81,6 +82,12 @@ struct sstore {
      */
     unsigned int fd_count;
     unsigned int blob_count;    //number of blobs in the list at any given time
+    /*
+     * this is the head of the wait queue. wait_queue_head_t is a typedef for
+     * struct __wait_queue_head (see linux/wait.h).  This queue is used in the
+     * read() function of sstore.c.
+     */
+    wait_queue_head_t wait_queue;
     struct blob * list_head;    //head of the blob linked list
     struct blob * seek_blob;    //a pointer to the last used blob
     struct semaphore mutex;     //semaphore for mutal exclusion
