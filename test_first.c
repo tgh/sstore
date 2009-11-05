@@ -36,7 +36,6 @@ int main ()
     int bytes_read = 0;
     int bytes_written = 0;
     int ioctl_return = 0;
-    char user_input[3];         //used to catch user's input
 
     //initialize buf
     buf.index = 0;
@@ -89,7 +88,7 @@ int main ()
     printf("\n\tAmount read = %d, data read = %s.\n", bytes_read, buf.data);
 
     printContinuePrompt();
-
+/*
     //read from the device using an index of 1
     printf("\nReading from index 1.");
     buf.index = 1;
@@ -106,7 +105,7 @@ int main ()
         perror("read");
     buf.data[9] = '\0';
     printf("\namount read = %d, data read = %s.\n", bytes_read, buf.data);
-
+*/
     printContinuePrompt();
 
     //delete the blob in the device at index 3
@@ -129,11 +128,13 @@ int main ()
 
 
 void printContinuePrompt() {
+    char user_input;
+
     printf("\n\nYou can now check /proc files (from another process).");
     do {
         printf("\n Press 'c' to continue. >");
-        fgets(user_input, 2, stdin);
-        if (user_input[0] != 'c' && user_input[1] != '\n');
+        scanf(" %c", &user_input);
+        if (user_input != 'c');
             printf("\nTry again.");
-    }while (user_input[0] != 'c' && user_input[1] != '\n');
+    }while (user_input != 'c');
 }
