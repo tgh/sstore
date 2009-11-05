@@ -49,7 +49,9 @@ int main ()
     if (sstore_device < 0)
         perror("open");
     
+
     printContinuePrompt();
+
 
     //write to the device using an index of 7
     printf("\nWriting to index 7.");
@@ -59,7 +61,7 @@ int main ()
         free(buf.data);
     buf.data = (char *) malloc(39);
     if (!buf.data) {
-        printf("\nError in malloc: sstore_test.c\n");
+        printf("\nError in malloc: test_first.c\n");
         return 0;
     }
     strncpy(buf.data, "A string of random characters this be.", 39);
@@ -68,7 +70,9 @@ int main ()
         perror("write");
     printf("\n\tAmount written = %d\n", bytes_written);
 
+
     printContinuePrompt();
+
 
     //read from the device using an index of 7
     printf("\nReading from index 7.");
@@ -78,7 +82,7 @@ int main ()
         free(buf.data);
     buf.data = (char *) malloc(39);
     if (!buf.data) {
-        printf("\nError in malloc: sstore_test.c\n");
+        printf("\nError in malloc: test_first.c\n");
         return 0;
     }   
     bytes_read = read(sstore_device, &buf, sizeof (struct readWriteBuffer));
@@ -87,8 +91,10 @@ int main ()
     buf.data[38] = '\0';
     printf("\n\tAmount read = %d, data read = %s.\n", bytes_read, buf.data);
 
+
     printContinuePrompt();
-/*
+
+
     //read from the device using an index of 1
     printf("\nReading from index 1.");
     buf.index = 1;
@@ -97,7 +103,7 @@ int main ()
         free(buf.data);
     buf.data = (char *) malloc(39);
     if (!buf.data) {
-        printf("\nError in malloc: sstore_test.c\n");
+        printf("\nError in malloc: test_first.c\n");
         return 0;
     }   
     bytes_read = read(sstore_device, &buf, sizeof (struct readWriteBuffer));
@@ -106,25 +112,33 @@ int main ()
     buf.data[9] = '\0';
     printf("\namount read = %d, data read = %s.\n", bytes_read, buf.data);
 
+
     printContinuePrompt();
-*/
+
+
     //delete the blob in the device at index 3
     printf("\nDeleting blob at index 3.");
     ioctl_return = ioctl(sstore_device, SSTORE_IOCTL_DELETE, 3);
     if (ioctl_return < 0)
         perror("ioctl");
 
+
     printContinuePrompt();
+
 
     //close the device
     printf("\nClosing the device.");
     if (sstore_device == 0)
         close(sstore_device);
 
+
     printContinuePrompt();
+
 
     return 0;
 }
+
+
 
 //user must enter 'c' to continue on
 void printContinuePrompt() {
