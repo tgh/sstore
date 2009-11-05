@@ -124,17 +124,25 @@ static int __init sstore_init(void) {
     //clean the array to null values
     memset(sstore_dev_array, 0, SSTORE_DEVICE_COUNT * sizeof (struct sstore));
 
-    //initialize each device in the array
+    //initialize each sstore device in the array
     for (i = 0; i < SSTORE_DEVICE_COUNT; ++i) {
+        //set open file count to 0
         sstore_dev_array[i].fd_count = 0;
+        //set blob count to 0
         sstore_dev_array[i].blob_count = 0;
+        //set pointers to NULL
         sstore_dev_array[i].list_head = NULL;
         sstore_dev_array[i].seek_blob = NULL;
+        //initialize mutex lock for mutual exclusion of sstore struct variables
         sema_init(&sstore_dev_array[i].mutex, 1);
+        //initialize wait queue for blocking i/o in read
+        init_waitqueue_head(&sstore_dev_array[i].wait_queue);
+        //initialize char device structure
         cdev_init(&sstore_dev_array[i].cdev, &sstore_fops);
         sstore_dev_array[i].cdev.owner = THIS_MODULE;
         sstore_dev_array[i].cdev.ops = &sstore_fops;
         device_num = MKDEV(sstore_major, sstore_minor + i);
+        //notify the kernel of this device--upon success, device is now "live"
         error = cdev_add(&sstore_dev_array[i].cdev, device_num, 1);
 	    if (error) {
             printk(KERN_ALERT "Error %d adding device sstore%d", error, i);
