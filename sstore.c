@@ -252,6 +252,9 @@ int sstore_proc_read_data(char * page, char ** start, off_t offset, int count,
                 seek += sprintf(page + seek, "NO DATA");
             blob = blob->next;
         }
+
+        //output a newline for readablilty
+        seek += sprintf(page + seek, "\n");
         //release mutex lock
         up(&device->mutex);
     }
@@ -295,6 +298,8 @@ int sstore_proc_read_stats(char * page, char ** start, off_t offset, int count,
         else
             seek += sprintf(page + seek, "seek pointer is NULL");
 
+        //output a newline for readablilty
+        seek += sprintf(page + seek, "\n");
         //release mutex lock
         up(&device->mutex);
     }
@@ -560,6 +565,9 @@ ssize_t sstore_write(struct file * filp, const char __user * buffer,
 
     //notify sleeping readers that something has been written to the blob list
     wake_up_interruptible(&device->wait_queue);
+
+    //release mutex lock
+    up(&device->mutex);
 
     //return the number of bytes written to the user
     return bytes_written;
